@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Location {
+  id                String       @id @default(cuid())
+  name              String
+  description       String
+  taskDescription   String
+  lat               Float
+  lng               Float
+  referencePhotoUrl String
+  order             Int          @default(0)
+  createdAt         DateTime     @default(now())
+  submissions       Submission[]
+}
+
+model Submission {
+  id          String           @id @default(cuid())
+  locationId  String
+  sessionId   String
+  photoUrl    String
+  status      SubmissionStatus @default(PENDING)
+  submittedAt DateTime         @default(now())
+  reviewedAt  DateTime?
+  location    Location         @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([locationId, sessionId])
+  @@index([sessionId])
+  @@index([locationId])
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}

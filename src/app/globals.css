@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-gothic-bg:        #0f0d0a;
+  --color-gothic-surface:   #1a1510;
+  --color-gothic-surface-2: #231d15;
+  --color-gothic-text:      #e8dcc8;
+  --color-gothic-muted:     #8a7a64;
+  --color-gothic-gold:      #c4a35a;
+  --color-gothic-gold-light:#e0c080;
+  --color-gothic-border:    #3d2e1a;
+  --color-gothic-pending:   #6b4a1a;
+  --color-gothic-approved:  #1a3a1a;
+
+  --font-display: var(--font-cinzel-decorative);
+  --font-heading: var(--font-cinzel);
+  --font-body:    var(--font-im-fell);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0f0d0a;
+  color: #e8dcc8;
+  font-family: var(--font-im-fell), Georgia, serif;
+  min-height: 100dvh;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f0d0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #3d2e1a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #c4a35a;
+}
+
+/* Gothic card ornate border */
+.gothic-card {
+  border: 1px solid #3d2e1a;
+  box-shadow:
+    0 0 0 1px #c4a35a40,
+    inset 0 0 40px rgba(0, 0, 0, 0.6);
+  background-color: #1a1510;
+  position: relative;
+}
+
+/* Corner ornament pseudo-elements */
+.gothic-card::before,
+.gothic-card::after {
+  content: '❧';
+  position: absolute;
+  color: #c4a35a;
+  font-size: 1rem;
+  opacity: 0.5;
+  line-height: 1;
+}
+.gothic-card::before {
+  top: 6px;
+  left: 8px;
+}
+.gothic-card::after {
+  bottom: 6px;
+  right: 8px;
+  transform: rotate(180deg);
+}
+
+/* Gold glow on hover */
+.gothic-glow {
+  transition: box-shadow 0.3s ease;
+}
+.gothic-glow:hover {
+  box-shadow: 0 0 16px #c4a35a60, 0 0 0 1px #c4a35a80;
+}
+
+/* Ornate button */
+.gothic-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.5rem;
+  border: 1px solid #c4a35a;
+  color: #c4a35a;
+  background: transparent;
+  font-family: var(--font-cinzel), serif;
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.gothic-btn:hover {
+  background: #c4a35a18;
+  box-shadow: 0 0 12px #c4a35a40;
+}
+.gothic-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.gothic-btn-primary {
+  background: #c4a35a;
+  color: #0f0d0a;
+}
+.gothic-btn-primary:hover {
+  background: #e0c080;
+  box-shadow: 0 0 20px #c4a35a60;
+}
+
+/* Leaflet map container override */
+.leaflet-container {
+  background: #0f0d0a !important;
+  font-family: var(--font-cinzel), serif;
+}
+
+/* Photo upload input */
+input[type='file'] {
+  display: none;
+}
+
+/* Transition for card state changes */
+.card-transition {
+  transition: all 0.4s ease;
+}
+
+/* Text selection */
+::selection {
+  background: #c4a35a40;
+  color: #e8dcc8;
+}
