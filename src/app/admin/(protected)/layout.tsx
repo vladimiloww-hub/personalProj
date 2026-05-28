@@ -5,13 +5,13 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
 
   return (
     <div className="min-h-dvh flex flex-col">
-      <nav className="border-b border-[#3d2e1a] px-4 py-3 flex items-center justify-between">
-        <span className="font-[family-name:var(--font-cinzel)] text-xs tracking-widest text-[#c4a35a] uppercase">
+      <nav className="border-b border-[#433f37] px-4 py-3 flex items-center justify-between">
+        <span className="font-[family-name:var(--font-cinzel)] text-xs tracking-widest text-[#d4cdbc] uppercase">
           go!go!budapest · Admin
         </span>
         <a
           href="/"
-          className="font-[family-name:var(--font-cinzel)] text-[10px] tracking-widest text-[#8a7a64] hover:text-[#c4a35a] transition-colors uppercase"
+          className="font-[family-name:var(--font-cinzel)] text-[10px] tracking-widest text-[#868174] hover:text-[#d4cdbc] transition-colors uppercase"
         >
           View Site
         </a>

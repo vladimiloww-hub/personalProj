@@ -1,20 +1,21 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-gothic-bg:        #0f0d0a;
-  --color-gothic-surface:   #1a1510;
-  --color-gothic-surface-2: #231d15;
-  --color-gothic-text:      #e8dcc8;
-  --color-gothic-muted:     #8a7a64;
-  --color-gothic-gold:      #c4a35a;
-  --color-gothic-gold-light:#e0c080;
-  --color-gothic-border:    #3d2e1a;
-  --color-gothic-pending:   #6b4a1a;
+  --color-gothic-bg:        #191713;
+  --color-gothic-surface:   #2a251a;
+  --color-gothic-surface-2: #242424;
+  --color-gothic-text:      #aea99b;
+  --color-gothic-muted:     #868174;
+  --color-gothic-gold:      #d4cdbc;
+  --color-gothic-gold-light:#d4cdbc;
+  --color-gothic-border:    #433f37;
+  --color-gothic-pending:   #625d50;
   --color-gothic-approved:  #1a3a1a;
 
   --font-display: var(--font-cinzel-decorative);
   --font-heading: var(--font-cinzel);
   --font-body:    var(--font-im-fell);
+  --font-rocker:  var(--font-new-rocker);
 }
 
 * {
@@ -26,8 +27,8 @@ html {
 }
 
 body {
-  background-color: #0f0d0a;
-  color: #e8dcc8;
+  background-color: #191713;
+  color: #aea99b;
   font-family: var(--font-im-fell), Georgia, serif;
   min-height: 100dvh;
 }
@@ -37,23 +38,23 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f0d0a;
+  background: #191713;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3d2e1a;
+  background: #433f37;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #c4a35a;
+  background: #d4cdbc;
 }
 
 /* Gothic card ornate border */
 .gothic-card {
-  border: 1px solid #3d2e1a;
+  border: 1px solid #433f37;
   box-shadow:
-    0 0 0 1px #c4a35a40,
+    0 0 0 1px #d4cdbc40,
     inset 0 0 40px rgba(0, 0, 0, 0.6);
-  background-color: #1a1510;
+  background-color: #2a251a;
   position: relative;
 }
 
@@ -62,7 +63,7 @@ body {
 .gothic-card::after {
   content: '❧';
   position: absolute;
-  color: #c4a35a;
+  color: #d4cdbc;
   font-size: 1rem;
   opacity: 0.5;
   line-height: 1;
@@ -77,12 +78,12 @@ body {
   transform: rotate(180deg);
 }
 
-/* Gold glow on hover */
+/* Glow on hover */
 .gothic-glow {
   transition: box-shadow 0.3s ease;
 }
 .gothic-glow:hover {
-  box-shadow: 0 0 16px #c4a35a60, 0 0 0 1px #c4a35a80;
+  box-shadow: 0 0 16px #d4cdbc60, 0 0 0 1px #d4cdbc80;
 }
 
 /* Ornate button */
@@ -92,8 +93,8 @@ body {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.625rem 1.5rem;
-  border: 1px solid #c4a35a;
-  color: #c4a35a;
+  border: 1px solid #d4cdbc;
+  color: #d4cdbc;
   background: transparent;
   font-family: var(--font-cinzel), serif;
   font-size: 0.8125rem;
@@ -104,25 +105,25 @@ body {
   position: relative;
 }
 .gothic-btn:hover {
-  background: #c4a35a18;
-  box-shadow: 0 0 12px #c4a35a40;
+  background: #d4cdbc18;
+  box-shadow: 0 0 12px #d4cdbc40;
 }
 .gothic-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 .gothic-btn-primary {
-  background: #c4a35a;
-  color: #0f0d0a;
+  background: #d4cdbc;
+  color: #191713;
 }
 .gothic-btn-primary:hover {
-  background: #e0c080;
-  box-shadow: 0 0 20px #c4a35a60;
+  background: #d4cdbc;
+  box-shadow: 0 0 20px #d4cdbc60;
 }
 
 /* Leaflet map container override */
 .leaflet-container {
-  background: #0f0d0a !important;
+  background: #191713 !important;
   font-family: var(--font-cinzel), serif;
 }
 
@@ -138,6 +139,6 @@ input[type='file'] {
 
 /* Text selection */
 ::selection {
-  background: #c4a35a40;
-  color: #e8dcc8;
+  background: #d4cdbc40;
+  color: #aea99b;
 }

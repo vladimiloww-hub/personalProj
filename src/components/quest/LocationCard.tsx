@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { LockIcon, HourglassIcon, CheckIcon } from '@/components/ui/LockIcon'
 import { OrnateButton } from '@/components/ui/OrnateButton'
+import { ImageLightbox } from '@/components/ui/ImageLightbox'
 import { PhotoUploadModal } from './PhotoUploadModal'
 import type { Submission } from '@/types/quest'
 
@@ -26,6 +27,7 @@ interface LocationCardProps {
 
 export function LocationCard({ location, submission, onSubmitted }: LocationCardProps) {
   const [modalOpen, setModalOpen] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
 
   const status = submission?.status ?? 'NONE'
   const isApproved = status === 'APPROVED'
@@ -37,11 +39,14 @@ export function LocationCard({ location, submission, onSubmitted }: LocationCard
     <>
       <article
         className={`gothic-card rounded-sm overflow-hidden flex flex-col card-transition ${
-          isApproved ? 'ring-1 ring-[#c4a35a60]' : ''
+          isApproved ? 'ring-1 ring-[#d4cdbc60]' : ''
         }`}
       >
         {/* Reference photo */}
-        <div className="relative aspect-[4/3] overflow-hidden">
+        <div
+          className="relative aspect-[4/3] overflow-hidden cursor-pointer"
+          onClick={() => setLightboxOpen(true)}
+        >
           <Image
             src={location.referencePhotoUrl}
             alt={location.name}
@@ -59,19 +64,19 @@ export function LocationCard({ location, submission, onSubmitted }: LocationCard
                 <CheckIcon className="w-8 h-8 text-green-400" />
               </div>
             ) : isPending ? (
-              <div className="bg-[#6b4a1a]/80 rounded-full p-3">
+              <div className="bg-[#625d50]/80 rounded-full p-3">
                 <HourglassIcon className="w-8 h-8 text-amber-400 animate-pulse" />
               </div>
             ) : (
               <div className="bg-black/60 rounded-full p-3">
-                <LockIcon className="w-8 h-8 text-[#c4a35a]" />
+                <LockIcon className="w-8 h-8 text-[#d4cdbc]" />
               </div>
             )}
           </div>
 
           {/* Order badge */}
-          <div className="absolute top-2 left-2 w-6 h-6 rounded-full border border-[#c4a35a] bg-[#0f0d0a]/80 flex items-center justify-center">
-            <span className="font-[family-name:var(--font-cinzel)] text-[10px] text-[#c4a35a]">
+          <div className="absolute top-2 left-2 w-6 h-6 rounded-full border border-[#d4cdbc] bg-[#191713]/80 flex items-center justify-center">
+            <span className="font-[family-name:var(--font-cinzel)] text-[10px] text-[#d4cdbc]">
               {String(location.order + 1).padStart(2, '0')}
             </span>
           </div>
@@ -81,40 +86,37 @@ export function LocationCard({ location, submission, onSubmitted }: LocationCard
         <div className="p-4 flex flex-col gap-3 flex-1">
           <div>
             <h2
-              className="font-[family-name:var(--font-cinzel)] text-sm font-semibold text-[#e8dcc8] tracking-wide leading-snug"
+              className="font-[family-name:var(--font-new-rocker)] text-sm font-semibold text-[#aea99b] tracking-wide leading-snug"
             >
               {location.name}
             </h2>
-            <p className="mt-1 text-[#8a7a64] text-xs font-[family-name:var(--font-im-fell)] italic leading-relaxed">
+            <p className="mt-1 text-[#868174] text-xs font-[family-name:var(--font-im-fell)] italic leading-relaxed">
               {location.description}
             </p>
           </div>
 
           {/* Task */}
-          <div className="border-t border-[#3d2e1a] pt-3">
-            <p className="text-[9px] font-[family-name:var(--font-cinzel)] tracking-[0.25em] text-[#c4a35a] uppercase mb-1">
+          <div className="border-t border-[#433f37] pt-3">
+            <p className="text-[9px] font-[family-name:var(--font-cinzel)] tracking-[0.25em] text-[#d4cdbc] uppercase mb-1">
               The Task
             </p>
-            <p className="text-xs text-[#8a7a64] font-[family-name:var(--font-im-fell)] italic">
+            <p className="text-xs text-[#868174] font-[family-name:var(--font-im-fell)] italic">
               {location.taskDescription}
             </p>
           </div>
 
-          {/* Coordinates */}
-          <div className="border-t border-[#3d2e1a] pt-3">
-            <p className="text-[9px] font-[family-name:var(--font-cinzel)] tracking-[0.25em] text-[#c4a35a] uppercase mb-1">
-              Coordinates
-            </p>
+          {/* Map link */}
+          <div className="border-t border-[#433f37] pt-3">
             <a
               href={mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs font-[family-name:var(--font-cinzel)] text-[#e8dcc8] hover:text-[#c4a35a] transition-colors underline-offset-2 hover:underline"
+              className="inline-flex items-center gap-2 text-[10px] font-[family-name:var(--font-cinzel)] tracking-[0.15em] uppercase text-[#d4cdbc] border border-[#d4cdbc40] px-3 py-1.5 rounded-sm hover:border-[#d4cdbc] hover:bg-[#d4cdbc10] transition-all"
             >
               <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
               </svg>
-              {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+              Open in Maps
             </a>
           </div>
 
@@ -144,6 +146,15 @@ export function LocationCard({ location, submission, onSubmitted }: LocationCard
           </div>
         </div>
       </article>
+
+      {lightboxOpen && (
+        <ImageLightbox
+          src={location.referencePhotoUrl}
+          alt={location.name}
+          title={location.name}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
 
       {modalOpen && (
         <PhotoUploadModal

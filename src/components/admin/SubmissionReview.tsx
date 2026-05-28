@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { OrnateButton } from '@/components/ui/OrnateButton'
+import { ImageLightbox } from '@/components/ui/ImageLightbox'
 import type { SubmissionWithLocation } from '@/types/quest'
 
 export function SubmissionReview({
@@ -13,6 +14,7 @@ export function SubmissionReview({
   const [submissions, setSubmissions] = useState(initialSubmissions)
   const [processing, setProcessing] = useState<string | null>(null)
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING')
+  const [lightboxSub, setLightboxSub] = useState<SubmissionWithLocation | null>(null)
 
   const handleReview = async (id: string, status: 'APPROVED' | 'REJECTED') => {
     setProcessing(id)
@@ -24,6 +26,7 @@ export function SubmissionReview({
     if (res.ok) {
       const updated = await res.json()
       setSubmissions((prev) => prev.map((s) => (s.id === id ? { ...s, ...updated } : s)))
+      setLightboxSub((prev) => (prev?.id === id ? { ...prev, ...updated } : prev))
     }
     setProcessing(null)
   }
@@ -34,7 +37,7 @@ export function SubmissionReview({
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="font-[family-name:var(--font-cinzel)] text-sm tracking-widest text-[#c4a35a] uppercase">
+        <h2 className="font-[family-name:var(--font-new-rocker)] text-sm tracking-widest text-[#d4cdbc] uppercase">
           Submissions
           {pendingCount > 0 && (
             <span className="ml-2 text-amber-400">({pendingCount} pending)</span>
@@ -47,8 +50,8 @@ export function SubmissionReview({
               onClick={() => setFilter(f)}
               className={`font-[family-name:var(--font-cinzel)] text-[9px] tracking-widest uppercase px-2 py-1 border transition-colors ${
                 filter === f
-                  ? 'border-[#c4a35a] text-[#c4a35a]'
-                  : 'border-[#3d2e1a] text-[#8a7a64] hover:border-[#c4a35a]'
+                  ? 'border-[#d4cdbc] text-[#d4cdbc]'
+                  : 'border-[#433f37] text-[#868174] hover:border-[#d4cdbc]'
               }`}
             >
               {f}
@@ -58,15 +61,17 @@ export function SubmissionReview({
       </div>
 
       {visible.length === 0 ? (
-        <p className="font-[family-name:var(--font-im-fell)] text-[#8a7a64] text-sm italic text-center py-8">
+        <p className="font-[family-name:var(--font-im-fell)] text-[#868174] text-sm italic text-center py-8">
           No submissions to show.
         </p>
       ) : (
         <div className="space-y-3">
           {visible.map((sub) => (
             <div key={sub.id} className="gothic-card p-4 flex gap-4 items-start">
-              {/* Submitted photo */}
-              <div className="relative w-20 h-20 flex-shrink-0 overflow-hidden rounded-sm border border-[#3d2e1a]">
+              <div
+                className="relative w-20 h-20 flex-shrink-0 overflow-hidden rounded-sm border border-[#433f37] cursor-pointer hover:border-[#d4cdbc] transition-colors"
+                onClick={() => setLightboxSub(sub)}
+              >
                 <Image
                   src={sub.photoUrl}
                   alt="Submission"
@@ -77,13 +82,13 @@ export function SubmissionReview({
               </div>
 
               <div className="flex-1 min-w-0 space-y-1">
-                <p className="font-[family-name:var(--font-cinzel)] text-xs text-[#e8dcc8] truncate">
+                <p className="font-[family-name:var(--font-cinzel)] text-xs text-[#aea99b] truncate">
                   {sub.location.name}
                 </p>
-                <p className="font-[family-name:var(--font-cinzel)] text-[9px] text-[#8a7a64] tracking-widest">
-                  Session: {sub.sessionId.slice(0, 8)}…
+                <p className="font-[family-name:var(--font-cinzel)] text-[9px] text-[#868174] tracking-widest">
+                  Seeker: {sub.nickname ?? `${sub.sessionId.slice(0, 8)}…`}
                 </p>
-                <p className="font-[family-name:var(--font-cinzel)] text-[9px] text-[#8a7a64]">
+                <p className="font-[family-name:var(--font-cinzel)] text-[9px] text-[#868174]">
                   {new Date(sub.submittedAt).toLocaleString()}
                 </p>
 
@@ -125,6 +130,36 @@ export function SubmissionReview({
             </div>
           ))}
         </div>
+      )}
+
+      {lightboxSub && (
+        <ImageLightbox
+          src={lightboxSub.photoUrl}
+          alt={lightboxSub.location.name}
+          title={lightboxSub.location.name}
+          subtitle={`Seeker: ${lightboxSub.nickname ?? lightboxSub.sessionId.slice(0, 8) + '…'}`}
+          onClose={() => setLightboxSub(null)}
+          actions={
+            lightboxSub.status === 'PENDING' ? (
+              <div className="flex gap-3">
+                <OrnateButton
+                  variant="primary"
+                  loading={processing === lightboxSub.id}
+                  onClick={() => handleReview(lightboxSub.id, 'APPROVED')}
+                >
+                  Approve
+                </OrnateButton>
+                <OrnateButton
+                  variant="danger"
+                  loading={processing === lightboxSub.id}
+                  onClick={() => handleReview(lightboxSub.id, 'REJECTED')}
+                >
+                  Reject
+                </OrnateButton>
+              </div>
+            ) : undefined
+          }
+        />
       )}
     </section>
   )

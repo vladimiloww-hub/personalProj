@@ -24,4 +24,5 @@ export interface Location {
 
 export interface SubmissionWithLocation extends Submission {
   location: Location
+  nickname?: string
 }

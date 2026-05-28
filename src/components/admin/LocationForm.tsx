@@ -74,13 +74,13 @@ export function LocationForm({ initial, onSaved, onCancel }: LocationFormProps) 
   }
 
   const inputClass =
-    'w-full bg-[#0f0d0a] border border-[#3d2e1a] text-[#e8dcc8] placeholder-[#3d2e1a] px-3 py-2 font-[family-name:var(--font-cinzel)] text-xs outline-none focus:border-[#c4a35a] transition-colors'
+    'w-full bg-[#191713] border border-[#433f37] text-[#aea99b] placeholder-[#433f37] px-3 py-2 font-[family-name:var(--font-cinzel)] text-xs outline-none focus:border-[#d4cdbc] transition-colors'
 
-  const labelClass = 'block font-[family-name:var(--font-cinzel)] text-[9px] tracking-[0.25em] text-[#8a7a64] uppercase mb-1'
+  const labelClass = 'block font-[family-name:var(--font-cinzel)] text-[9px] tracking-[0.25em] text-[#868174] uppercase mb-1'
 
   return (
     <form onSubmit={handleSubmit} className="gothic-card p-5 space-y-4">
-      <h3 className="font-[family-name:var(--font-cinzel)] text-sm text-[#e8dcc8] tracking-wide">
+      <h3 className="font-[family-name:var(--font-cinzel)] text-sm text-[#aea99b] tracking-wide">
         {initial?.id ? 'Edit Location' : 'Add Location'}
       </h3>
 
@@ -121,7 +121,7 @@ export function LocationForm({ initial, onSaved, onCancel }: LocationFormProps) 
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="border border-[#3d2e1a] px-2 text-[#8a7a64] hover:text-[#c4a35a] hover:border-[#c4a35a] transition-colors text-xs"
+              className="border border-[#433f37] px-2 text-[#868174] hover:text-[#d4cdbc] hover:border-[#d4cdbc] transition-colors text-xs"
               disabled={uploading}
             >
               {uploading ? '…' : '↑'}

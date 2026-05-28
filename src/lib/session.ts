@@ -5,6 +5,8 @@ export type SessionData = {
   sessionId?: string
   questUnlocked?: boolean
   isAdmin?: boolean
+  participantId?: string
+  nickname?: string
 }
 
 export const SESSION_OPTIONS = {

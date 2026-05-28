@@ -40,3 +40,11 @@ enum SubmissionStatus {
   APPROVED
   REJECTED
 }
+
+model Participant {
+  id         String    @id @default(cuid())
+  nickname   String
+  token      String    @unique
+  createdAt  DateTime  @default(now())
+  lastSeenAt DateTime?
+}

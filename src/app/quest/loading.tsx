@@ -3,7 +3,7 @@ export default function QuestLoading() {
     <main className="min-h-dvh flex items-center justify-center">
       <div className="text-center space-y-4">
         <svg
-          className="mx-auto w-12 h-12 text-[#c4a35a] animate-spin"
+          className="mx-auto w-12 h-12 text-[#d4cdbc] animate-spin"
           viewBox="0 0 24 24"
           fill="none"
         >
@@ -14,7 +14,7 @@ export default function QuestLoading() {
             d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"
           />
         </svg>
-        <p className="font-[family-name:var(--font-cinzel)] text-[10px] tracking-[0.3em] text-[#8a7a64] uppercase animate-pulse">
+        <p className="font-[family-name:var(--font-cinzel)] text-[10px] tracking-[0.3em] text-[#868174] uppercase animate-pulse">
           Summoning the quest…
         </p>
       </div>

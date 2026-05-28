@@ -36,7 +36,7 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-[family-name:var(--font-cinzel)] text-sm tracking-widest text-[#c4a35a] uppercase">
+        <h2 className="font-[family-name:var(--font-new-rocker)] text-sm tracking-widest text-[#d4cdbc] uppercase">
           Locations
         </h2>
         <OrnateButton variant="primary" onClick={() => { setEditing(null); setShowForm(true) }}>
@@ -61,34 +61,34 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
 
       <div className="space-y-2">
         {locations.length === 0 ? (
-          <p className="font-[family-name:var(--font-im-fell)] text-[#8a7a64] text-sm italic text-center py-8">
+          <p className="font-[family-name:var(--font-im-fell)] text-[#868174] text-sm italic text-center py-8">
             No locations yet. Add the first one above.
           </p>
         ) : (
           locations.map((loc) => (
             <div key={loc.id} className="gothic-card p-3 flex items-center gap-3">
-              <div className="w-6 h-6 flex-shrink-0 flex items-center justify-center border border-[#3d2e1a] rounded-full">
-                <span className="font-[family-name:var(--font-cinzel)] text-[9px] text-[#c4a35a]">
+              <div className="w-6 h-6 flex-shrink-0 flex items-center justify-center border border-[#433f37] rounded-full">
+                <span className="font-[family-name:var(--font-cinzel)] text-[9px] text-[#d4cdbc]">
                   {String(loc.order + 1).padStart(2, '0')}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-[family-name:var(--font-cinzel)] text-xs text-[#e8dcc8] truncate">{loc.name}</p>
-                <p className="font-[family-name:var(--font-im-fell)] text-[10px] text-[#8a7a64] italic">
+                <p className="font-[family-name:var(--font-cinzel)] text-xs text-[#aea99b] truncate">{loc.name}</p>
+                <p className="font-[family-name:var(--font-im-fell)] text-[10px] text-[#868174] italic">
                   {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
                 </p>
               </div>
               <div className="flex gap-2 flex-shrink-0">
                 <button
                   onClick={() => { setShowForm(false); setEditing(loc) }}
-                  className="font-[family-name:var(--font-cinzel)] text-[9px] tracking-widest text-[#8a7a64] hover:text-[#c4a35a] uppercase transition-colors"
+                  className="font-[family-name:var(--font-cinzel)] text-[9px] tracking-widest text-[#868174] hover:text-[#d4cdbc] uppercase transition-colors"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => handleDelete(loc.id)}
                   disabled={deleting === loc.id}
-                  className="font-[family-name:var(--font-cinzel)] text-[9px] tracking-widest text-[#8a7a64] hover:text-red-400 uppercase transition-colors"
+                  className="font-[family-name:var(--font-cinzel)] text-[9px] tracking-widest text-[#868174] hover:text-red-400 uppercase transition-colors"
                 >
                   {deleting === loc.id ? '…' : 'Del'}
                 </button>

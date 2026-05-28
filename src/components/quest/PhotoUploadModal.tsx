@@ -65,29 +65,29 @@ export function PhotoUploadModal({ location, onClose, onSubmitted }: PhotoUpload
     >
       <div className="gothic-card w-full max-w-sm rounded-sm p-5 space-y-4">
         <div className="text-center">
-          <p className="font-[family-name:var(--font-cinzel)] text-[9px] tracking-[0.3em] text-[#8a7a64] uppercase">
+          <p className="font-[family-name:var(--font-cinzel)] text-[9px] tracking-[0.3em] text-[#868174] uppercase">
             Submit Proof
           </p>
-          <h3 className="font-[family-name:var(--font-cinzel)] text-sm text-[#e8dcc8] mt-1">
+          <h3 className="font-[family-name:var(--font-cinzel)] text-sm text-[#aea99b] mt-1">
             {location.name}
           </h3>
         </div>
 
         {/* Photo area */}
         <div
-          className="relative aspect-[4/3] bg-[#0f0d0a] border border-dashed border-[#3d2e1a] rounded-sm overflow-hidden cursor-pointer hover:border-[#c4a35a] transition-colors"
+          className="relative aspect-[4/3] bg-[#191713] border border-dashed border-[#433f37] rounded-sm overflow-hidden cursor-pointer hover:border-[#d4cdbc] transition-colors"
           onClick={() => fileInputRef.current?.click()}
         >
           {preview ? (
             <Image src={preview} alt="Preview" fill className="object-cover" />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-              <svg className="w-10 h-10 text-[#3d2e1a]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+              <svg className="w-10 h-10 text-[#433f37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
                 <rect x="3" y="5" width="18" height="14" rx="2" />
                 <circle cx="12" cy="12" r="4" />
                 <circle cx="18" cy="7" r="1" fill="currentColor" />
               </svg>
-              <p className="font-[family-name:var(--font-cinzel)] text-[10px] tracking-widest text-[#3d2e1a] uppercase">
+              <p className="font-[family-name:var(--font-cinzel)] text-[10px] tracking-widest text-[#433f37] uppercase">
                 Tap to take photo
               </p>
             </div>

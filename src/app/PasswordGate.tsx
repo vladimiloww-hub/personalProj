@@ -33,10 +33,35 @@ export default function PasswordGate() {
     }
   }
 
-  // Auto-submit if ?password= is in the URL (QR code flow)
+  const submitToken = async (token: string) => {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/auth/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      })
+      if (res.ok) {
+        router.push('/quest')
+      } else {
+        setError('This seal is not recognised. The token may be invalid.')
+        setLoading(false)
+      }
+    } catch {
+      setError('A dark force disrupted the connection. Try again.')
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
+    if (hasAutoSubmitted.current) return
+    const token = searchParams.get('token')
     const pw = searchParams.get('password')
-    if (pw && !hasAutoSubmitted.current) {
+    if (token) {
+      hasAutoSubmitted.current = true
+      submitToken(token)
+    } else if (pw) {
       hasAutoSubmitted.current = true
       submit(pw)
     }
@@ -47,7 +72,7 @@ export default function PasswordGate() {
     <div className="w-full max-w-xs space-y-4">
       {loading ? (
         <div className="text-center py-4">
-          <p className="font-[family-name:var(--font-cinzel)] text-xs tracking-widest text-[#8a7a64] uppercase animate-pulse">
+          <p className="font-[family-name:var(--font-cinzel)] text-xs tracking-widest text-[#868174] uppercase animate-pulse">
             Verifying the seal…
           </p>
         </div>
@@ -60,7 +85,7 @@ export default function PasswordGate() {
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && password && submit(password)}
               placeholder="Enter access code"
-              className="w-full bg-[#1a1510] border border-[#3d2e1a] text-[#e8dcc8] placeholder-[#3d2e1a] px-4 py-3 font-[family-name:var(--font-cinzel)] text-sm tracking-widest text-center outline-none focus:border-[#c4a35a] transition-colors"
+              className="w-full bg-[#2a251a] border border-[#433f37] text-[#aea99b] placeholder-[#433f37] px-4 py-3 font-[family-name:var(--font-cinzel)] text-sm tracking-widest text-center outline-none focus:border-[#d4cdbc] transition-colors"
               style={{ display: 'block' }}
               autoComplete="off"
             />
@@ -81,7 +106,7 @@ export default function PasswordGate() {
             </p>
           )}
 
-          <p className="text-center text-[#3d2e1a] text-[10px] font-[family-name:var(--font-cinzel)] tracking-widest uppercase">
+          <p className="text-center text-[#433f37] text-[10px] font-[family-name:var(--font-cinzel)] tracking-widest uppercase">
             or scan the quest seal
           </p>
         </>

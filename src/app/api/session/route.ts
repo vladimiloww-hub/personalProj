@@ -7,5 +7,7 @@ export async function GET() {
     sessionId: session.sessionId ?? null,
     questUnlocked: session.questUnlocked ?? false,
     isAdmin: session.isAdmin ?? false,
+    participantId: session.participantId ?? null,
+    nickname: session.nickname ?? null,
   })
 }
