@@ -1,13 +1,13 @@
-import { redirect } from 'next/navigation'
-import { Suspense } from 'react'
-import { SvgDivider } from '@/components/ui/SvgDivider'
-import PasswordGate from './PasswordGate'
-import { getSession } from '@/lib/session'
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { SvgDivider } from "@/components/ui/SvgDivider";
+import PasswordGate from "./PasswordGate";
+import { getSession } from "@/lib/session";
 
 export default async function HomePage() {
-  const session = await getSession()
+  const session = await getSession();
   if (session.questUnlocked) {
-    redirect('/quest')
+    redirect("/quest");
   }
 
   return (
@@ -20,7 +20,7 @@ export default async function HomePage() {
             radial-gradient(circle at 20% 50%, #d4cdbc 1px, transparent 1px),
             radial-gradient(circle at 80% 50%, #d4cdbc 1px, transparent 1px)
           `,
-          backgroundSize: '60px 60px',
+          backgroundSize: "60px 60px",
         }}
       />
 
@@ -40,8 +40,10 @@ export default async function HomePage() {
         </div>
 
         <h1 className="font-[family-name:var(--font-new-rocker)] leading-none text-[#aea99b]">
-          <span className="block text-5xl sm:text-6xl font-black tracking-tight">go!go!</span>
-          <span className="block text-5xl sm:text-6xl font-black tracking-tight text-[#d4cdbc]">
+          <span className="block text-4xl sm:text-6xl font-black tracking-tight">
+            go!go!
+          </span>
+          <span className="block text-4xl sm:text-6xl font-black tracking-tight text-[#d4cdbc]">
             budapest
           </span>
         </h1>
@@ -55,7 +57,8 @@ export default async function HomePage() {
         <SvgDivider className="my-6 w-full max-w-[240px]" />
 
         <p className="font-[family-name:var(--font-im-fell)] text-[#868174] text-base italic leading-relaxed mb-8 max-w-xs">
-          Traverse the ancient streets. Discover hidden places. Prove thy passage.
+          Traverse the ancient streets. Discover hidden places. Prove thy
+          passage.
         </p>
 
         <Suspense fallback={null}>
@@ -74,5 +77,5 @@ export default async function HomePage() {
         </p>
       </div>
     </main>
-  )
+  );
 }
