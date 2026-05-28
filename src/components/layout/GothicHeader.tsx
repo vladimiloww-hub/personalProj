@@ -21,11 +21,11 @@ export function GothicHeader({
           ← Back
         </Link>
       )}
-      <div className="inline-block gap-2">
+      <div className="gap-3 flex flex-col">
         <p className="text-[#868174] font-[family-name:var(--font-cinzel)] text-xs tracking-[0.3em] uppercase mb-1">
           A Quest Through
         </p>
-        <h1 className="font-[family-name:var(--font-new-rocker)] text-4xl sm:text-8xl font-black text-[#aea99b] leading-none tracking-tight">
+        <h1 className="font-[family-name:var(--font-new-rocker)] text-6xl sm:text-8xl font-black text-[#aea99b] leading-none tracking-tight">
           go!go!
           <span className="text-[#d4cdbc]">budapest</span>
         </h1>
