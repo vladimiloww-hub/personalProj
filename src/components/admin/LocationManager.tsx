@@ -10,6 +10,7 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Location | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [toggling, setToggling] = useState<string | null>(null)
 
   const handleSaved = (loc: Location) => {
     setLocations((prev) => {
@@ -31,6 +32,20 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
     await fetch(`/api/locations/${id}`, { method: 'DELETE' })
     setLocations((prev) => prev.filter((l) => l.id !== id))
     setDeleting(null)
+  }
+
+  const handleToggleLock = async (loc: Location) => {
+    setToggling(loc.id)
+    const res = await fetch(`/api/locations/${loc.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ locked: !loc.locked }),
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      setLocations((prev) => prev.map((l) => (l.id === loc.id ? updated : l)))
+    }
+    setToggling(null)
   }
 
   return (
@@ -78,7 +93,19 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
                   {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
                 </p>
               </div>
-              <div className="flex gap-2 flex-shrink-0">
+              <div className="flex gap-2 flex-shrink-0 items-center">
+                <button
+                  onClick={() => handleToggleLock(loc)}
+                  disabled={toggling === loc.id}
+                  title={loc.locked ? 'Reveal this location' : 'Seal this location'}
+                  className={`font-[family-name:var(--font-cinzel)] text-[9px] tracking-widest uppercase transition-colors ${
+                    loc.locked
+                      ? 'text-amber-600 hover:text-amber-400'
+                      : 'text-green-600 hover:text-green-400'
+                  }`}
+                >
+                  {toggling === loc.id ? '…' : loc.locked ? 'Sealed' : 'Shown'}
+                </button>
                 <button
                   onClick={() => { setShowForm(false); setEditing(loc) }}
                   className="font-[family-name:var(--font-cinzel)] text-[9px] tracking-widest text-[#868174] hover:text-[#d4cdbc] uppercase transition-colors"

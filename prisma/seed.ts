@@ -45,7 +45,7 @@ const locations = [
     taskDescription: "Photograph the dome from St. Stephen's Square with the fountain in the foreground.",
     lat: 47.5005,
     lng: 19.0534,
-    referencePhotoUrl: '/basilica.png',
+    referencePhotoUrl: '/basilicaNew.png',
     order: 4,
   },
   {
@@ -54,7 +54,7 @@ const locations = [
     taskDescription: 'Photograph the building facade with its distinctive perforated TERROR letters casting shadows.',
     lat: 47.5089,
     lng: 19.0627,
-    referencePhotoUrl: '/thouse.png',
+    referencePhotoUrl: '/thouseNew.png',
     order: 5,
   },
   {

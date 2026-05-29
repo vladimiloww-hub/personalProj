@@ -17,6 +17,7 @@ interface Location {
   lng: number;
   referencePhotoUrl: string;
   order: number;
+  locked: boolean;
 }
 
 interface LocationCardProps {
@@ -47,6 +48,40 @@ export function LocationCard({
   }, [isApproved, location.id]);
 
   const mapsUrl = `https://www.google.com/maps?q=${location.lat},${location.lng}`;
+
+  if (location.locked) {
+    return (
+      <article className="gothic-card rounded-sm overflow-hidden flex flex-col">
+        {/* Sealed image area */}
+        <div className="relative aspect-[4/3] bg-[#191713] flex items-center justify-center">
+          <LockIcon className="w-10 h-10 text-[#2a251a]" />
+          {/* Order badge */}
+          <div className="absolute top-2 left-2 w-6 h-6 rounded-full border border-[#433f37] bg-[#191713]/80 flex items-center justify-center">
+            <span className="font-[family-name:var(--font-cinzel)] text-[12px] text-[#433f37]">
+              {String(location.order + 1).padStart(2, "0")}
+            </span>
+          </div>
+        </div>
+
+        {/* Sealed content */}
+        <div className="p-4 flex flex-col gap-3 flex-1">
+          <div>
+            <h2 className="font-[family-name:var(--font-new-rocker)] text-sm text-[#433f37] tracking-wide leading-snug">
+              ✦ Sealed Grounds ✦
+            </h2>
+            <p className="mt-1 text-[#2a251a] text-xs font-[family-name:var(--font-im-fell)] leading-relaxed">
+              This trial has not yet been revealed to thee.
+            </p>
+          </div>
+          <div className="border-t border-[#2a251a] pt-3 mt-auto">
+            <p className="text-center font-[family-name:var(--font-cinzel)] text-[10px] tracking-[0.3em] text-[#2a251a] uppercase">
+              Await thy summons…
+            </p>
+          </div>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <>

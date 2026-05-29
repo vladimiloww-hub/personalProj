@@ -10,12 +10,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params
   const body = await req.json()
-  const { name, description, taskDescription, lat, lng, referencePhotoUrl, order, reward } = body
+  const { name, description, taskDescription, lat, lng, referencePhotoUrl, order, reward, locked } = body
 
   try {
     const location = await prisma.location.update({
       where: { id },
-      data: { name, description, taskDescription, lat, lng, referencePhotoUrl, order, reward },
+      data: { name, description, taskDescription, lat, lng, referencePhotoUrl, order, reward, locked },
     })
     return NextResponse.json(location)
   } catch (err) {
@@ -25,6 +25,22 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
     return NextResponse.json({ error: msg }, { status: 500 })
   }
+}
+
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getSession()
+  if (!session.isAdmin) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const { id } = await params
+  const { locked } = await req.json()
+
+  const location = await prisma.location.update({
+    where: { id },
+    data: { locked },
+  })
+  return NextResponse.json(location)
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

@@ -19,6 +19,7 @@ export interface Location {
   lng: number
   referencePhotoUrl: string
   order: number
+  locked: boolean
   reward?: string | null
   createdAt: string
 }
