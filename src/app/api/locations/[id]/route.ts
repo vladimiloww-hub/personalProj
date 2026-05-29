@@ -18,8 +18,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       data: { name, description, taskDescription, lat, lng, referencePhotoUrl, order, reward },
     })
     return NextResponse.json(location)
-  } catch {
-    return NextResponse.json({ error: 'Location not found' }, { status: 404 })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (msg.includes('Record to update not found')) {
+      return NextResponse.json({ error: 'Location not found' }, { status: 404 })
+    }
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
 

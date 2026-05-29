@@ -9,7 +9,7 @@ const locations = [
     taskDescription: 'Take a photo from the main terrace with the Parliament building visible across the Danube.',
     lat: 47.5019,
     lng: 19.0345,
-    referencePhotoUrl: '/fisherman.png',
+    referencePhotoUrl: '/fishermanBastion.png',
     order: 0,
   },
   {
@@ -18,7 +18,7 @@ const locations = [
     taskDescription: 'Photograph the ornate main gate with the raven-and-ring emblem of King Matthias.',
     lat: 47.4960,
     lng: 19.0398,
-    referencePhotoUrl: '/kindCastle.png',
+    referencePhotoUrl: '/budaCastle.png',
     order: 1,
   },
   {
@@ -27,7 +27,7 @@ const locations = [
     taskDescription: 'Capture the stalls from the upper gallery level, looking down at the main hall.',
     lat: 47.4869,
     lng: 19.0616,
-    referencePhotoUrl: '/centralMarket.png',
+    referencePhotoUrl: '/greatMarketHall.png',
     order: 2,
   },
   {
@@ -36,7 +36,7 @@ const locations = [
     taskDescription: 'Photograph the building from Kossuth Lajos Square, facing the main facade.',
     lat: 47.5071,
     lng: 19.0453,
-    referencePhotoUrl: '/parlament.png',
+    referencePhotoUrl: '/parliamet.png',
     order: 3,
   },
   {
@@ -63,7 +63,7 @@ const locations = [
     taskDescription: 'Find and photograph the most intricate stained glass panel inside the museum.',
     lat: 47.5020,
     lng: 19.0795,
-    referencePhotoUrl: '/RothMuseum.png',
+    referencePhotoUrl: '/rothHouse.png',
     order: 6,
   },
 ]
