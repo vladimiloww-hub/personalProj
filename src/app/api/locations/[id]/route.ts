@@ -10,12 +10,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params
   const body = await req.json()
-  const { name, description, taskDescription, lat, lng, referencePhotoUrl, order } = body
+  const { name, description, taskDescription, lat, lng, referencePhotoUrl, order, reward } = body
 
   try {
     const location = await prisma.location.update({
       where: { id },
-      data: { name, description, taskDescription, lat, lng, referencePhotoUrl, order },
+      data: { name, description, taskDescription, lat, lng, referencePhotoUrl, order, reward },
     })
     return NextResponse.json(location)
   } catch {

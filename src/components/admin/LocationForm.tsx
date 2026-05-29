@@ -20,6 +20,7 @@ export function LocationForm({ initial, onSaved, onCancel }: LocationFormProps) 
     lng: initial?.lng?.toString() ?? '',
     order: initial?.order?.toString() ?? '0',
     referencePhotoUrl: initial?.referencePhotoUrl ?? '',
+    reward: initial?.reward ?? '',
   })
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -52,6 +53,7 @@ export function LocationForm({ initial, onSaved, onCancel }: LocationFormProps) 
       lng: parseFloat(form.lng),
       order: parseInt(form.order),
       referencePhotoUrl: form.referencePhotoUrl,
+      reward: form.reward,
     }
 
     const url = initial?.id ? `/api/locations/${initial.id}` : '/api/locations'
@@ -96,6 +98,10 @@ export function LocationForm({ initial, onSaved, onCancel }: LocationFormProps) 
         <div className="col-span-2">
           <label className={labelClass}>Task Description</label>
           <textarea className={`${inputClass} resize-none`} rows={2} value={form.taskDescription} onChange={(e) => set('taskDescription', e.target.value)} required />
+        </div>
+        <div className="col-span-2">
+          <label className={labelClass}>Reward</label>
+          <textarea className={`${inputClass} resize-none`} rows={2} value={form.reward} onChange={(e) => set('reward', e.target.value)} placeholder="What awaits the seeker here…" />
         </div>
         <div>
           <label className={labelClass}>Latitude</label>

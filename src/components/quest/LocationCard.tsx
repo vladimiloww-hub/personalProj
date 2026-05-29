@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { LockIcon, HourglassIcon, CheckIcon } from "@/components/ui/LockIcon";
 import { OrnateButton } from "@/components/ui/OrnateButton";
@@ -30,19 +30,28 @@ export function LocationCard({
   submission,
   onSubmitted,
 }: LocationCardProps) {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-
   const status = submission?.status ?? "NONE";
   const isApproved = status === "APPROVED";
   const isPending = status === "PENDING";
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [showSticker, setShowSticker] = useState(false);
+
+  useEffect(() => {
+    if (!isApproved) return;
+    const key = `yippee-${location.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    setShowSticker(true);
+  }, [isApproved, location.id]);
 
   const mapsUrl = `https://www.google.com/maps?q=${location.lat},${location.lng}`;
 
   return (
     <>
       <article
-        className={`gothic-card rounded-sm overflow-hidden flex flex-col card-transition ${
+        className={`gothic-card rounded-sm overflow-hidden flex flex-col card-transition relative ${
           isApproved ? "ring-1 ring-[#d4cdbc60]" : ""
         }`}
       >
@@ -152,6 +161,19 @@ export function LocationCard({
             )}
           </div>
         </div>
+
+        {showSticker && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none sticker-entrance">
+            <video
+              src="/stickerYipeeCat.webm"
+              autoPlay
+              muted
+              playsInline
+              onEnded={() => setShowSticker(false)}
+              className="w-48 h-48 object-contain drop-shadow-2xl"
+            />
+          </div>
+        )}
       </article>
 
       {lightboxOpen && (

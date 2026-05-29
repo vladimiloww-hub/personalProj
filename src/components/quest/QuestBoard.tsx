@@ -98,6 +98,40 @@ export function QuestBoard({
           <ProgressMap locations={approvedLocations} totalCount={totalCount} />
         </div>
       )}
+
+      {/* Rewards section — visible only when all tasks completed */}
+      {approvedCount === totalCount && totalCount > 0 && (
+        <div className="mt-8 space-y-4">
+          <SvgDivider />
+          <div className="text-center space-y-1">
+            <p className="font-[family-name:var(--font-cinzel)] text-[9px] tracking-[0.3em] text-[#d4cdbc] uppercase">
+              ✦ The Spoils of Victory ✦
+            </p>
+            <p className="font-[family-name:var(--font-im-fell)] text-xs italic text-[#868174]">
+              Thy trials are complete. Claim what is owed.
+            </p>
+          </div>
+          <div className="space-y-3">
+            {locations
+              .filter((loc) => loc.reward)
+              .map((loc) => (
+                <div key={loc.id} className="gothic-card p-4 flex gap-3 items-start">
+                  <span className="font-[family-name:var(--font-cinzel)] text-[9px] text-[#d4cdbc] mt-0.5 flex-shrink-0">
+                    {String(loc.order + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <p className="font-[family-name:var(--font-cinzel)] text-xs text-[#aea99b] tracking-wide">
+                      {loc.name}
+                    </p>
+                    <p className="font-[family-name:var(--font-im-fell)] text-sm italic text-[#d4cdbc] mt-0.5">
+                      {loc.reward}
+                    </p>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

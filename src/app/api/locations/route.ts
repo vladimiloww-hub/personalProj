@@ -16,14 +16,14 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { name, description, taskDescription, lat, lng, referencePhotoUrl, order } = body
+  const { name, description, taskDescription, lat, lng, referencePhotoUrl, order, reward } = body
 
   if (!name || !description || !taskDescription || lat == null || lng == null || !referencePhotoUrl) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
   const location = await prisma.location.create({
-    data: { name, description, taskDescription, lat, lng, referencePhotoUrl, order: order ?? 0 },
+    data: { name, description, taskDescription, lat, lng, referencePhotoUrl, order: order ?? 0, reward: reward ?? '' },
   })
   return NextResponse.json(location, { status: 201 })
 }

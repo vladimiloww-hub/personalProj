@@ -142,3 +142,12 @@ input[type='file'] {
   background: #d4cdbc40;
   color: #aea99b;
 }
+
+/* Yippee cat sticker entrance animation */
+@keyframes stickerEntrance {
+  from { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg);    opacity: 1; }
+}
+.sticker-entrance {
+  animation: stickerEntrance 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}

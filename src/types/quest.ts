@@ -19,6 +19,7 @@ export interface Location {
   lng: number
   referencePhotoUrl: string
   order: number
+  reward?: string | null
   createdAt: string
 }
 
