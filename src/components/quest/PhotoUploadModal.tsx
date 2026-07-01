@@ -19,7 +19,8 @@ interface PhotoUploadModalProps {
 }
 
 export function PhotoUploadModal({ location, onClose, onSubmitted }: PhotoUploadModalProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -76,7 +77,7 @@ export function PhotoUploadModal({ location, onClose, onSubmitted }: PhotoUpload
         {/* Photo area */}
         <div
           className="relative aspect-[4/3] bg-[#191713] border border-dashed border-[#433f37] rounded-sm overflow-hidden cursor-pointer hover:border-[#d4cdbc] transition-colors"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => galleryInputRef.current?.click()}
         >
           {preview ? (
             <Image src={preview} alt="Preview" fill className="object-cover" />
@@ -88,17 +89,47 @@ export function PhotoUploadModal({ location, onClose, onSubmitted }: PhotoUpload
                 <circle cx="18" cy="7" r="1" fill="currentColor" />
               </svg>
               <p className="font-[family-name:var(--font-cinzel)] text-[10px] tracking-widest text-[#433f37] uppercase">
-                Tap to take photo
+                Tap to choose a photo
               </p>
             </div>
           )}
         </div>
 
+        {/* Source choices */}
+        <div className="flex gap-3">
+          <OrnateButton
+            variant="default"
+            className="flex-1"
+            onClick={() => cameraInputRef.current?.click()}
+            disabled={loading}
+          >
+            Take Photo
+          </OrnateButton>
+          <OrnateButton
+            variant="default"
+            className="flex-1"
+            onClick={() => galleryInputRef.current?.click()}
+            disabled={loading}
+          >
+            Gallery / Files
+          </OrnateButton>
+        </div>
+
+        {/* Camera capture (mobile opens the camera directly) */}
         <input
-          ref={fileInputRef}
+          ref={cameraInputRef}
           type="file"
           accept="image/*"
           capture="environment"
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+        />
+
+        {/* Gallery / files picker (no capture → lets the OS show gallery & file browser) */}
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
           onChange={handleFileChange}
           style={{ display: 'none' }}
         />

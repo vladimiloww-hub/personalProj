@@ -38,9 +38,15 @@ describe('PhotoUploadModal', () => {
     expect(screen.getByText(/submit proof/i)).toBeInTheDocument()
   })
 
-  it('renders Tap to take photo placeholder', () => {
+  it('renders Tap to choose a photo placeholder', () => {
     render(<PhotoUploadModal location={mockLocation} onClose={vi.fn()} onSubmitted={vi.fn()} />)
-    expect(screen.getByText(/tap to take photo/i)).toBeInTheDocument()
+    expect(screen.getByText(/tap to choose a photo/i)).toBeInTheDocument()
+  })
+
+  it('offers Take Photo and Gallery / Files source options', () => {
+    render(<PhotoUploadModal location={mockLocation} onClose={vi.fn()} onSubmitted={vi.fn()} />)
+    expect(screen.getByRole('button', { name: /take photo/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /gallery \/ files/i })).toBeInTheDocument()
   })
 
   it('shows Cancel and Submit buttons', () => {
