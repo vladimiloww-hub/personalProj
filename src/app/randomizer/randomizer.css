@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-rnd-background: #faf9f6;
+  --color-rnd-foreground: #14140f;
+  --color-rnd-line: #d8d5cd;
+  --color-rnd-muted: #8a877e;
+  --font-rnd-sans: var(--font-rnd-inter);
+  --font-rnd-display: var(--font-rnd-unbounded);
+}
+
+.randomizer-root {
+  background: var(--color-rnd-background);
+  color: var(--color-rnd-foreground);
+  font-family: var(--font-rnd-inter), Arial, Helvetica, sans-serif;
+}
