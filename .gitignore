@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# the original /mreomd prize picture must never be committed; only private/prize.enc
+prize.jpg
+prize.jpeg
+prize.png

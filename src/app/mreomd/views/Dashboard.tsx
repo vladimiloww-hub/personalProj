@@ -10,6 +10,7 @@ import { hardest, percent, progressFor } from "../lib/progress";
 import { RANDOM_SIZE, practiceHref } from "../lib/sessions";
 import { FAVORITES_ID, useStore } from "../lib/store";
 import { Icon } from "../components/Icon";
+import PrizeBoard from "../components/PrizeBoard";
 import { Bar, CategoryPicker, ModeCard, StatTile, btn } from "../components/ui";
 
 export default function Dashboard() {
@@ -73,6 +74,8 @@ export default function Dashboard() {
           </div>
         </div>
       </section>
+
+      <PrizeBoard exams={exams} />
 
       {IS_DEMO_BANK && (
         <div className="flex gap-3 rounded-2xl border border-[#f7c600]/60 bg-[#f7c600]/10 p-4 text-sm">

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { correctMessage, wrongMessage } from "../lib/cute";
 
-/** Stickers shown after a correct answer. Files live in public/mreomd/right. */
+/** Stickers shown after an answer. Files live in public/mreomd/right. */
 const DIR = "/mreomd/right";
 const IMAGES = [
   "sticker.webp",
@@ -18,12 +19,14 @@ const IMAGES = [
 /** Transparent VP9 WebM: Safari can't render the alpha channel, so these are skipped there. */
 const VIDEOS = ["sticker.webm", "sticker2.webm", "sticker3.webm", "sticker4.webm", "stickerYipeeCat.webm"];
 
-const EVENT = "mreo:correct";
-const SHOW_MS = 1800;
+const EVENT = "mreo:answer";
+const IMAGE_MS = 2000;
+/** Upper bound for video stickers; they normally hide themselves when playback ends. */
+const VIDEO_MAX_MS = 3500;
 
-/** Call after a correct answer to pop a random sticker. */
-export function celebrateCorrect() {
-  if (typeof window !== "undefined") window.dispatchEvent(new Event(EVENT));
+/** Call after a practice answer to pop a random sticker with a message. */
+export function celebrateAnswer(ok: boolean) {
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(EVENT, { detail: { ok } }));
 }
 
 function canPlayAlphaWebm() {
@@ -34,42 +37,77 @@ function canPlayAlphaWebm() {
   return document.createElement("video").canPlayType('video/webm; codecs="vp9"') !== "";
 }
 
+interface Burst {
+  src: string;
+  video: boolean;
+  ok: boolean;
+  text: string;
+  key: number;
+}
+
+/** Sticker that springs out over the page, like the Yippee cat on the quest cards. */
 export default function StickerBurst() {
-  const [sticker, setSticker] = useState<{ src: string; video: boolean; key: number } | null>(null);
+  const [burst, setBurst] = useState<Burst | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const last = useRef<string | null>(null);
 
   useEffect(() => {
-    const pool = [...IMAGES.map((f) => ({ f, video: false })), ...(canPlayAlphaWebm() ? VIDEOS.map((f) => ({ f, video: true })) : [])];
-    const onCorrect = () => {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const pool = [
+      ...IMAGES.map((f) => ({ f, video: false })),
+      ...(canPlayAlphaWebm() ? VIDEOS.map((f) => ({ f, video: true })) : []),
+    ];
+    const onAnswer = (e: Event) => {
+      const ok = Boolean((e as CustomEvent<{ ok: boolean }>).detail?.ok);
       let pick = pool[Math.floor(Math.random() * pool.length)];
       if (pool.length > 1 && pick.f === last.current) pick = pool[(pool.indexOf(pick) + 1) % pool.length];
       last.current = pick.f;
-      setSticker({ src: `${DIR}/${pick.f}`, video: pick.video, key: Date.now() });
+      setBurst({
+        src: `${DIR}/${pick.f}`,
+        video: pick.video,
+        ok,
+        text: ok ? correctMessage() : wrongMessage(),
+        key: Date.now(),
+      });
       if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => setSticker(null), SHOW_MS);
+      timer.current = setTimeout(() => setBurst(null), pick.video ? VIDEO_MAX_MS : IMAGE_MS);
     };
-    window.addEventListener(EVENT, onCorrect);
+    window.addEventListener(EVENT, onAnswer);
     return () => {
-      window.removeEventListener(EVENT, onCorrect);
+      window.removeEventListener(EVENT, onAnswer);
       if (timer.current) clearTimeout(timer.current);
     };
   }, []);
 
-  if (!sticker) return null;
+  if (!burst) return null;
   return (
     <div
-      key={sticker.key}
-      aria-hidden="true"
-      className="mr-sticker pointer-events-none fixed bottom-[calc(84px+env(safe-area-inset-bottom))] right-3 z-50 h-32 w-32 sm:h-40 sm:w-40 lg:bottom-8 lg:right-8"
+      key={burst.key}
+      className="pointer-events-none fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 px-6"
+      role="status"
+      aria-live="polite"
     >
-      {sticker.video ? (
-        <video src={sticker.src} autoPlay muted playsInline className="h-full w-full object-contain" />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={sticker.src} alt="" className="h-full w-full object-contain" />
-      )}
+      <div className="mr-sticker h-44 w-44 drop-shadow-2xl sm:h-52 sm:w-52" aria-hidden="true">
+        {burst.video ? (
+          <video
+            src={burst.src}
+            autoPlay
+            muted
+            playsInline
+            onEnded={() => setBurst(null)}
+            className="h-full w-full object-contain"
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={burst.src} alt="" className="h-full w-full object-contain" />
+        )}
+      </div>
+      <p
+        className={`mr-sticker-text max-w-xs rounded-2xl px-4 py-2 text-center text-base font-bold text-white shadow-xl ${
+          burst.ok ? "bg-mr-good" : "bg-[#d63384]"
+        }`}
+      >
+        {burst.text}
+      </p>
     </div>
   );
 }
