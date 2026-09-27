@@ -81,7 +81,7 @@ export default function Info() {
             </p>
             <div className="mt-3 flex flex-wrap gap-1">
               {list.map((c) => (
-                <span key={c.code} className="rounded-md bg-mr-surface-2 px-2 py-0.5 text-xs font-semibold" title={c.name.ru}>
+                <span key={c.code} className="rounded-md bg-mr-surface-2 px-2 py-0.5 text-xs font-semibold" title={`${c.name.ru} (${c.covers})`}>
                   {c.code}
                 </span>
               ))}
@@ -142,7 +142,10 @@ export default function Info() {
                 return (
                   <tr key={c.code} className="border-b border-mr-line/60">
                     <td className="py-2 font-semibold">{c.code}</td>
-                    <td className="py-2">{tr(c.name, settings.lang)}</td>
+                    <td className="py-2">
+                      {tr(c.name, settings.lang)}
+                      <span className="block text-xs text-mr-muted">{c.covers}</span>
+                    </td>
                     <td className="py-2 text-right tabular-nums text-mr-muted">
                       {f.questions} / {f.minutes} мин / ≥{f.minCorrect}
                     </td>

@@ -19,23 +19,11 @@ export type VehicleGroup =
   | "trolley"
   | "tractor";
 
-export type CategoryCode =
-  | "AM"
-  | "A1"
-  | "A2"
-  | "A"
-  | "B1"
-  | "B"
-  | "H"
-  | "BE"
-  | "C1"
-  | "C1E"
-  | "C"
-  | "CE"
-  | "D1"
-  | "D1E"
-  | "D"
-  | "F";
+/**
+ * Categories as the exam question pools split them: A and B (with AM, A1, A2,
+ * B1 and H) share one pool, E covers every category with a trailer.
+ */
+export type CategoryCode = "AB" | "C" | "D" | "E" | "F";
 
 export type Illustration =
   | { kind: "sign"; id: string }
@@ -77,6 +65,9 @@ export interface ExamFormat {
 export interface Category {
   code: CategoryCode;
   name: L;
+  /** Licence categories this pool covers, e.g. "A, B, AM, A1, A2, B1, H". */
+  covers: string;
+  icons: string;
   groups: VehicleGroup[];
   format: "short" | "long";
 }
