@@ -120,6 +120,26 @@
   display: none;
 }
 
+.mreo-root .mr-sticker {
+  animation: mr-sticker-pop 1.8s ease-out both;
+}
+@keyframes mr-sticker-pop {
+  0% { opacity: 0; transform: scale(0.4) rotate(-12deg); }
+  15% { opacity: 1; transform: scale(1.08) rotate(4deg); }
+  25% { transform: scale(1) rotate(0); }
+  80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9) translateY(12px); }
+}
+
+.mreo-root .mr-tiktok-feed {
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.mreo-root .mr-tiktok-feed::-webkit-scrollbar {
+  display: none;
+}
+
 @media print {
   .mreo-root .mr-noprint {
     display: none !important;
