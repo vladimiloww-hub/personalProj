@@ -8,8 +8,8 @@ import type { ExamRecord } from "../lib/store";
 export const PRIZE_COLS = 3;
 export const PRIZE_ROWS = 4;
 export const PRIZE_CELLS = PRIZE_COLS * PRIZE_ROWS;
-/** Only passed exams for cars (category B) open cells. */
-export const PRIZE_CATEGORY = "B";
+/** Only passed exams of the shared A/B pool open cells (older category-B exams are mapped onto it). */
+export const PRIZE_CATEGORY = "AB";
 
 const SRC = "/api/mreomd/prize";
 
@@ -25,7 +25,7 @@ const ORDER = (() => {
   return idx;
 })();
 
-/** Passed category-B exams, oldest first. */
+/** Passed category-AB exams, oldest first. */
 export function prizeExams(exams: ExamRecord[]) {
   return exams.filter((e) => e.passed && e.cat === PRIZE_CATEGORY).sort((a, b) => a.at - b.at);
 }
@@ -49,7 +49,7 @@ export default function PrizeBoard({ exams, highlight }: { exams: ExamRecord[]; 
         <div>
           <h2 className="font-semibold">🎁 Твой приз</h2>
           <p className="text-xs text-mr-muted">
-            Каждый сданный экзамен категории B открывает одну ячейку
+            Каждый сданный экзамен категории AB открывает одну ячейку
           </p>
         </div>
         <span className="shrink-0 text-sm font-semibold tabular-nums">

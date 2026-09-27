@@ -103,3 +103,15 @@ describe('progress', () => {
     expect(hardest([a, b, c], getState().stats).map((q) => q.id)).toEqual([b.id])
   })
 })
+
+describe('category migration', () => {
+  it('moves progress saved under A/B onto the shared AB pool', () => {
+    const s = sanitizeState({
+      settings: { cat: 'B' },
+      exams: [{ id: 'e1', cat: 'B', passed: true, qids: [], wrong: [] }],
+    })
+    expect(s.settings.cat).toBe('AB')
+    expect(s.exams[0].cat).toBe('AB')
+    expect(sanitizeState({ settings: { cat: 'CE' } }).settings.cat).toBe('E')
+  })
+})

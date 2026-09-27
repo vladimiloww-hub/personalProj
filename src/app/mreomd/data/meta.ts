@@ -10,23 +10,58 @@ export const EXAM_FORMATS: Record<Category["format"], ExamFormat> = {
 };
 
 export const CATEGORIES: Category[] = [
-  { code: "AM", format: "short", groups: ["moto"], name: { ru: "Мопеды, лёгкие квадрициклы", ro: "Mopede, cvadricicluri ușoare" } },
-  { code: "A1", format: "short", groups: ["moto"], name: { ru: "Лёгкие мотоциклы до 125 см³", ro: "Motociclete ușoare până la 125 cm³" } },
-  { code: "A2", format: "short", groups: ["moto"], name: { ru: "Мотоциклы до 35 кВт", ro: "Motociclete până la 35 kW" } },
-  { code: "A", format: "short", groups: ["moto"], name: { ru: "Мотоциклы", ro: "Motociclete" } },
-  { code: "B1", format: "short", groups: ["car"], name: { ru: "Квадрициклы, мототрициклы", ro: "Cvadricicluri, triciclete" } },
-  { code: "B", format: "short", groups: ["car"], name: { ru: "Легковые автомобили до 3,5 т", ro: "Autoturisme până la 3,5 t" } },
-  { code: "H", format: "short", groups: ["car", "tractor"], name: { ru: "Тракторы и самоходные машины", ro: "Tractoare și mașini autopropulsate" } },
-  { code: "BE", format: "long", groups: ["car", "trailer"], name: { ru: "B с тяжёлым прицепом", ro: "B cu remorcă grea" } },
-  { code: "C1", format: "long", groups: ["car", "truck"], name: { ru: "Грузовые 3,5–7,5 т", ro: "Autocamioane 3,5–7,5 t" } },
-  { code: "C1E", format: "long", groups: ["car", "truck", "trailer"], name: { ru: "C1 с прицепом", ro: "C1 cu remorcă" } },
-  { code: "C", format: "long", groups: ["car", "truck"], name: { ru: "Грузовые автомобили", ro: "Autocamioane" } },
-  { code: "CE", format: "long", groups: ["car", "truck", "trailer"], name: { ru: "C с прицепом", ro: "C cu remorcă" } },
-  { code: "D1", format: "long", groups: ["car", "bus"], name: { ru: "Автобусы до 16 мест", ro: "Autobuze până la 16 locuri" } },
-  { code: "D1E", format: "long", groups: ["car", "bus", "trailer"], name: { ru: "D1 с прицепом", ro: "D1 cu remorcă" } },
-  { code: "D", format: "long", groups: ["car", "bus"], name: { ru: "Автобусы", ro: "Autobuze" } },
-  { code: "F", format: "long", groups: ["bus", "trolley"], name: { ru: "Троллейбусы", ro: "Troleibuze" } },
+  {
+    code: "AB",
+    format: "short",
+    groups: ["moto", "car", "tractor"],
+    covers: "A, B, AM, A1, A2, B1, H",
+    icons: "🛵🏍️🚗",
+    name: { ru: "Мотоциклы и легковые автомобили", ro: "Motociclete și autoturisme" },
+  },
+  {
+    code: "C",
+    format: "long",
+    groups: ["car", "truck"],
+    covers: "C, C1",
+    icons: "🚚🚛",
+    name: { ru: "Грузовые автомобили", ro: "Autocamioane" },
+  },
+  {
+    code: "D",
+    format: "long",
+    groups: ["car", "bus"],
+    covers: "D, D1",
+    icons: "🚐🚌",
+    name: { ru: "Автобусы", ro: "Autobuze" },
+  },
+  {
+    code: "E",
+    format: "long",
+    groups: ["car", "truck", "bus", "trailer"],
+    covers: "BE, C1E, CE, D1E, DE",
+    icons: "🚛🔗",
+    name: { ru: "Составы с прицепом", ro: "Ansambluri cu remorcă" },
+  },
+  {
+    code: "F",
+    format: "long",
+    groups: ["bus", "trolley"],
+    covers: "F",
+    icons: "🚎",
+    name: { ru: "Троллейбусы", ro: "Troleibuze" },
+  },
 ];
+
+/** Map any category code saved by an older version (A, B1, CE, …) onto the current pools. */
+export function normalizeCategory(code: unknown): CategoryCode {
+  if (typeof code !== "string") return "AB";
+  const c = code.toUpperCase();
+  if (c === "AB" || c === "C" || c === "D" || c === "E" || c === "F") return c;
+  if (c.endsWith("E")) return "E";
+  if (c.startsWith("C")) return "C";
+  if (c.startsWith("D")) return "D";
+  return "AB";
+}
 
 export const CATEGORY_BY_CODE = Object.fromEntries(
   CATEGORIES.map((c) => [c.code, c]),
