@@ -27,6 +27,7 @@ import type { Question } from "../lib/types";
 import { Icon } from "../components/Icon";
 import PrizeBoard, { cellOpenedBy } from "../components/PrizeBoard";
 import QuestionCard from "../components/QuestionCard";
+import SwipeNav from "../components/SwipeNav";
 import { CategoryPicker, Empty, PageTitle, Toggle, btn } from "../components/ui";
 
 export default function Exam() {
@@ -299,6 +300,12 @@ function ExamRun({ exam }: { exam: ActiveExam }) {
       </div>
 
       {q && (
+        <SwipeNav
+          onPrev={() => setPos((p) => Math.max(0, p - 1))}
+          onNext={() => setPos((p) => Math.min(total - 1, p + 1))}
+          canPrev={pos > 0}
+          canNext={pos < total - 1}
+        >
         <QuestionCard
           key={q.id}
           q={q}
@@ -312,6 +319,7 @@ function ExamRun({ exam }: { exam: ActiveExam }) {
             </span>
           }
         />
+        </SwipeNav>
       )}
 
       <div className="mt-4 flex items-center gap-2">
