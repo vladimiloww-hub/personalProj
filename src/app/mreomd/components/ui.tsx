@@ -1,51 +1,62 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { CATEGORIES, EXAM_FORMATS, CATEGORY_BY_CODE } from "../data/meta";
+import { useMemo, type ReactNode } from "react";
+import { CATEGORIES, CATEGORY_BY_CODE } from "../data/meta";
+import { questionsFor } from "../lib/bank";
+import { progressFor } from "../lib/progress";
 import { setSettings, useStore } from "../lib/store";
 import type { CategoryCode } from "../lib/types";
 import { Icon, type IconName } from "./Icon";
 
 export function CategoryPicker({ compact = false }: { compact?: boolean }) {
-  const { settings } = useStore();
-  const groups = [
-    { format: "short" as const, items: CATEGORIES.filter((c) => c.format === "short") },
-    { format: "long" as const, items: CATEGORIES.filter((c) => c.format === "long") },
-  ];
+  const { settings, stats } = useStore();
+  const counts = useMemo(
+    () =>
+      Object.fromEntries(
+        CATEGORIES.map((c) => {
+          const p = progressFor(questionsFor(c.code), stats);
+          return [c.code, p];
+        }),
+      ),
+    [stats],
+  );
+  const current = CATEGORY_BY_CODE[settings.cat as CategoryCode];
   return (
     <div className="space-y-2">
-      {groups.map((g) => {
-        const f = EXAM_FORMATS[g.format];
-        return (
-          <div key={g.format} className="flex flex-wrap items-center gap-1.5">
-            {!compact && (
-              <span className="w-full text-xs text-mr-muted">
-                {f.questions} вопросов · {f.minutes} минут
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {CATEGORIES.map((c) => {
+          const active = settings.cat === c.code;
+          const p = counts[c.code];
+          return (
+            <button
+              key={c.code}
+              type="button"
+              onClick={() => setSettings({ cat: c.code })}
+              aria-pressed={active}
+              title={`${c.name.ru} (${c.covers})`}
+              className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                active ? "border-mr-accent bg-mr-accent/10 ring-1 ring-mr-accent" : "border-mr-line bg-mr-surface hover:border-mr-accent/60"
+              }`}
+            >
+              <span className="text-2xl font-bold leading-none tracking-tight">{c.code}</span>
+              <span className="flex flex-col items-end gap-0.5">
+                <span className="text-base leading-none" aria-hidden>
+                  {c.icons}
+                </span>
+                <span className="text-xs font-semibold tabular-nums text-mr-muted">
+                  {p.seen} / {p.total}
+                </span>
               </span>
-            )}
-            {g.items.map((c) => (
-              <button
-                key={c.code}
-                type="button"
-                onClick={() => setSettings({ cat: c.code })}
-                aria-pressed={settings.cat === c.code}
-                title={c.name.ru}
-                className={`min-w-11 rounded-lg border px-2.5 py-1.5 text-sm font-semibold transition-colors ${
-                  settings.cat === c.code
-                    ? "border-mr-accent bg-mr-accent text-mr-accent-ink"
-                    : "border-mr-line bg-mr-surface hover:border-mr-accent/60"
-                }`}
-              >
-                {c.code}
-              </button>
-            ))}
-          </div>
-        );
-      })}
-      <p className="text-sm text-mr-muted">
-        {CATEGORY_BY_CODE[settings.cat as CategoryCode]?.name.ru}
-      </p>
+            </button>
+          );
+        })}
+      </div>
+      {!compact && current && (
+        <p className="text-sm text-mr-muted">
+          {current.name.ru} · категории {current.covers}
+        </p>
+      )}
     </div>
   );
 }

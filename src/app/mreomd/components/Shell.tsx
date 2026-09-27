@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { setSettings, useStore } from "../lib/store";
 import { Icon, type IconName } from "./Icon";
+import StickerBurst from "./StickerBurst";
+import TikTokFeed from "./TikTokFeed";
 
 const BASE = "/mreomd";
 
@@ -85,7 +87,13 @@ export default function Shell({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-5 lg:pb-12">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-5 lg:pb-12">
+        {children}
+        {/* Hidden during the exam so videos don't distract from the timer. */}
+        {!pathname.startsWith(`${BASE}/exam`) && <TikTokFeed />}
+      </main>
+
+      <StickerBurst />
 
       <footer className="mr-noprint mx-auto hidden w-full max-w-6xl px-4 pb-8 text-xs text-mr-muted lg:block">
         Неофициальный тренажёр. Формат экзамена и нормы — по данным ASP и РЦР (ПП № 357/2009); проверяйте
