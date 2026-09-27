@@ -1,0 +1,146 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-mr-bg: var(--mr-bg);
+  --color-mr-surface: var(--mr-surface);
+  --color-mr-surface-2: var(--mr-surface-2);
+  --color-mr-text: var(--mr-text);
+  --color-mr-muted: var(--mr-muted);
+  --color-mr-line: var(--mr-line);
+  --color-mr-accent: var(--mr-accent);
+  --color-mr-accent-ink: var(--mr-accent-ink);
+  --color-mr-accent-soft: var(--mr-accent-soft);
+  --color-mr-good: var(--mr-good);
+  --color-mr-good-soft: var(--mr-good-soft);
+  --color-mr-bad: var(--mr-bad);
+  --color-mr-bad-soft: var(--mr-bad-soft);
+  --color-mr-star: var(--mr-star);
+  --color-mr-mark: var(--mr-mark);
+  --color-mr-chart: var(--mr-chart);
+  --font-mr-sans: var(--font-mr-inter);
+}
+
+.mreo-root {
+  --mr-bg: #f4f6f9;
+  --mr-surface: #ffffff;
+  --mr-surface-2: #edf0f5;
+  --mr-text: #111827;
+  --mr-muted: #5d6778;
+  --mr-line: #dde2ea;
+  --mr-accent: #1d4ed8;
+  --mr-accent-ink: #ffffff;
+  --mr-accent-soft: #e5edff;
+  --mr-good: #15803d;
+  --mr-good-soft: #e3f5e9;
+  --mr-bad: #c62828;
+  --mr-bad-soft: #fdeaea;
+  --mr-star: #e0a100;
+  --mr-mark: #fff1a8;
+  --mr-chart: #1d4ed8;
+  --mr-shadow: 0 1px 2px rgb(16 24 40 / 0.05), 0 1px 3px rgb(16 24 40 / 0.06);
+
+  background: var(--mr-bg);
+  color: var(--mr-text);
+  font-family: var(--font-mr-inter), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mreo-root:not([data-theme="light"]) {
+    --mr-bg: #0e1116;
+    --mr-surface: #161b22;
+    --mr-surface-2: #1f2630;
+    --mr-text: #e6edf3;
+    --mr-muted: #8d99a8;
+    --mr-line: #2b3441;
+    --mr-accent: #6c9dff;
+    --mr-accent-ink: #0b1220;
+    --mr-accent-soft: #1a2945;
+    --mr-good: #4ade80;
+    --mr-good-soft: #112a1b;
+    --mr-bad: #f87171;
+    --mr-bad-soft: #3a1618;
+    --mr-star: #fbbf24;
+    --mr-mark: #5b4a00;
+    --mr-chart: #5a8cff;
+    --mr-shadow: none;
+    color-scheme: dark;
+  }
+}
+
+.mreo-root[data-theme="dark"] {
+  --mr-bg: #0e1116;
+  --mr-surface: #161b22;
+  --mr-surface-2: #1f2630;
+  --mr-text: #e6edf3;
+  --mr-muted: #8d99a8;
+  --mr-line: #2b3441;
+  --mr-accent: #6c9dff;
+  --mr-accent-ink: #0b1220;
+  --mr-accent-soft: #1a2945;
+  --mr-good: #4ade80;
+  --mr-good-soft: #112a1b;
+  --mr-bad: #f87171;
+  --mr-bad-soft: #3a1618;
+  --mr-star: #fbbf24;
+  --mr-mark: #5b4a00;
+  --mr-chart: #5a8cff;
+  --mr-shadow: none;
+  color-scheme: dark;
+}
+
+.mreo-root .mr-card {
+  background: var(--mr-surface);
+  border: 1px solid var(--mr-line);
+  border-radius: 16px;
+  box-shadow: var(--mr-shadow);
+}
+
+.mreo-root .mr-focus:focus-visible,
+.mreo-root button:focus-visible,
+.mreo-root a:focus-visible,
+.mreo-root input:focus-visible,
+.mreo-root select:focus-visible,
+.mreo-root textarea:focus-visible {
+  outline: 2px solid var(--mr-accent);
+  outline-offset: 2px;
+}
+
+.mreo-root mark {
+  background: var(--mr-mark);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+.mreo-root .mr-scroll-x {
+  scrollbar-width: none;
+}
+.mreo-root .mr-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+@media print {
+  .mreo-root .mr-noprint {
+    display: none !important;
+  }
+}
+
+/* The root layout paints the gothic quest theme on <body>; repaint it for this section. */
+body:has(.mreo-root) {
+  background: #f4f6f9;
+}
+body:has(.mreo-root[data-theme="dark"]) {
+  background: #0e1116;
+}
+@media (prefers-color-scheme: dark) {
+  body:has(.mreo-root:not([data-theme="light"])) {
+    background: #0e1116;
+  }
+}
+html:has(.mreo-root) ::-webkit-scrollbar-track {
+  background: transparent;
+}
+html:has(.mreo-root) ::-webkit-scrollbar-thumb {
+  background: #9aa3b2;
+}
