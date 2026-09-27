@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { TIKTOK_VIDEOS, tiktokPlayerUrl, tiktokVideoUrl, type TikTokVideo } from "../data/tiktok";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { TIKTOK_VIDEOS, shuffleFeed, tiktokPlayerUrl, tiktokVideoUrl, type TikTokVideo } from "../data/tiktok";
 import { Icon } from "./Icon";
 
 /** Iframes kept mounted on each side of the visible slide. */
@@ -19,8 +19,10 @@ function send(frame: HTMLIFrameElement | null | undefined, type: PlayerCommand) 
  * Vertical swipe feed of TikTok Embed Players, sized like a phone screen.
  * Iframes load only once the feed nears the viewport, and only around the visible slide;
  * the slide scrolled away from is paused, and a finished video advances to the next one.
+ * Videos come from the chosen creators (data/tiktok.ts), shuffled on every visit.
  */
-export default function TikTokFeed({ videos = TIKTOK_VIDEOS }: { videos?: TikTokVideo[] }) {
+export default function TikTokFeed() {
+  const [videos, setVideos] = useState<TikTokVideo[]>(TIKTOK_VIDEOS);
   const sectionRef = useRef<HTMLElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const slides = useRef<(HTMLDivElement | null)[]>([]);
@@ -28,15 +30,61 @@ export default function TikTokFeed({ videos = TIKTOK_VIDEOS }: { videos?: TikTok
   const [near, setNear] = useState(false);
   const [active, setActive] = useState(0);
   const activeRef = useRef(0);
+  /** Set when the list is reordered under the first slide; scroll snapping would otherwise follow it. */
+  const backToTop = useRef(false);
 
   // Don't touch tiktok.com until the feed is close to the screen.
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => e.isIntersecting && setNear(true), { rootMargin: "300px" });
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        // Shuffle only on the client, before anything is shown, so the server render stays stable.
+        backToTop.current = true;
+        setVideos((v) => shuffleFeed(v));
+        setNear(true);
+        io.disconnect();
+      },
+      { rootMargin: "300px" },
+    );
     io.observe(el);
     return () => io.disconnect();
   }, []);
+
+  // Pull the creators' latest videos. Replace the list only if nothing has been watched yet,
+  // otherwise append what's new so the current video doesn't jump.
+  useEffect(() => {
+    if (!near) return;
+    let cancelled = false;
+    fetch("/api/mreomd/tiktok")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { videos?: TikTokVideo[] } | null) => {
+        if (cancelled || !data?.videos?.length) return;
+        const fresh = shuffleFeed(data.videos);
+        setVideos((prev) => {
+          if (activeRef.current === 0) {
+            backToTop.current = true;
+            // Keep the video already on screen in front.
+            const first = prev[0];
+            return first ? [first, ...fresh.filter((v) => v.id !== first.id)] : fresh;
+          }
+          const known = new Set(prev.map((v) => v.id));
+          const added = fresh.filter((v) => !known.has(v.id));
+          return added.length ? [...prev, ...added] : prev;
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [near]);
+
+  useLayoutEffect(() => {
+    if (!backToTop.current) return;
+    backToTop.current = false;
+    if (feedRef.current) feedRef.current.scrollTop = 0;
+  }, [videos]);
 
   // Track which slide is snapped into view.
   useEffect(() => {
@@ -103,12 +151,23 @@ export default function TikTokFeed({ videos = TIKTOK_VIDEOS }: { videos?: TikTok
     <section ref={sectionRef} className="mr-noprint mx-auto mt-10 w-full max-w-[420px]" aria-label="Видео из TikTok">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Видео от автошкол</h2>
+          <h2 className="text-lg font-semibold">Лента</h2>
           <p className="text-xs text-mr-muted">Листайте вверх и вниз, как в TikTok</p>
         </div>
-        <span className="text-xs tabular-nums text-mr-muted">
-          {active + 1} / {videos.length}
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          {/* The real For You feed only exists in the TikTok app; this opens it there. */}
+          <a
+            href="https://www.tiktok.com/foryou"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full bg-mr-text px-3 py-1 text-xs font-medium text-mr-bg"
+          >
+            Мой TikTok
+          </a>
+          <span className="text-xs tabular-nums text-mr-muted">
+            {active + 1} / {videos.length}
+          </span>
+        </div>
       </div>
 
       <div className="relative">

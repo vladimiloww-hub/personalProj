@@ -144,6 +144,8 @@
 }
 
 .mreo-root .mr-tiktok-feed {
+  /* The list is reshuffled after mount; without this the browser follows the old first video. */
+  overflow-anchor: none;
   scroll-snap-type: y mandatory;
   overscroll-behavior: contain;
   scrollbar-width: none;
