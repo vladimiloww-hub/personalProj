@@ -18,6 +18,7 @@ import {
 import { FAVORITES_ID, getState, recordAnswer, setSettings, toggleInList, useHydrated, useStore } from "../lib/store";
 import { Icon } from "../components/Icon";
 import QuestionCard from "../components/QuestionCard";
+import { celebrateAnswer } from "../components/StickerBurst";
 import SwipeNav from "../components/SwipeNav";
 import { Bar, Empty, ModeCard, PageTitle, Toggle, btn } from "../components/ui";
 
@@ -132,6 +133,7 @@ function PracticeRun() {
       const ok = a === q.c;
       setAnswers((prev) => ({ ...prev, [q.id]: a }));
       recordAnswer(q.id, ok);
+      celebrateAnswer(ok);
       if (ok && settings.autoNext) {
         autoTimer.current = setTimeout(() => go(pos + 1), 700);
       }
