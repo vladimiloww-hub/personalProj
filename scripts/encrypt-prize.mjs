@@ -1,12 +1,11 @@
 // Encrypts the prize picture for /mreomd so the public repo only holds ciphertext.
 //
-//   PRIZE_KEY=<base64 32 bytes> node scripts/encrypt-prize.mjs path/to/prize.jpg
+//   PRIZE_KEY='<any passphrase>' node scripts/encrypt-prize.mjs path/to/prize.jpg
 //
 // Accepts prize.jpg or prize.png, shrinks it to 1200px wide JPEG and writes
-// private/prize.enc (12-byte IV | 16-byte GCM tag | ciphertext). Without PRIZE_KEY a new key
-// is generated and printed: put it in the PRIZE_KEY env var on Vercel. Never commit the
-// original picture.
-import { createCipheriv, randomBytes } from "node:crypto";
+// private/prize.enc (12-byte IV | 16-byte GCM tag | ciphertext). Set the same PRIZE_KEY
+// passphrase in the Vercel env vars. Never commit the original picture.
+import { createCipheriv, randomBytes, scryptSync } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
@@ -17,15 +16,13 @@ if (!input || !/\.(jpe?g|png)$/i.test(input)) {
   process.exit(1);
 }
 
-let key = process.env.PRIZE_KEY ? Buffer.from(process.env.PRIZE_KEY, "base64") : null;
-if (!key) {
-  key = randomBytes(32);
-  console.log(`PRIZE_KEY=${key.toString("base64")}`);
-}
-if (key.length !== 32) {
-  console.error("PRIZE_KEY must be 32 bytes, base64-encoded");
+const passphrase = process.env.PRIZE_KEY;
+if (!passphrase || passphrase.length < 12) {
+  console.error("set PRIZE_KEY to a passphrase of at least 12 characters");
   process.exit(1);
 }
+// Must match prizeKey() in src/app/api/mreomd/prize/route.ts.
+const key = scryptSync(passphrase, "mreomd-prize-v1", 32);
 
 const jpeg = await sharp(input).rotate().resize({ width: 1200, withoutEnlargement: true }).jpeg({ quality: 82 }).toBuffer();
 const iv = randomBytes(12);
