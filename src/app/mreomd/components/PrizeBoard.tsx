@@ -93,7 +93,7 @@ export default function PrizeBoard({ exams, highlight }: { exams: ExamRecord[]; 
         <p className="mt-3 text-center text-sm text-mr-muted">
           {left === 0
             ? "Все ячейки открыты! 🎉"
-            : `Осталось ${left} ${plural(left, "ячейка", "ячейки", "ячеек")}: сдай экзамен B, чтобы открыть следующую`}
+            : `Осталось ${left} ${plural(left, "ячейка", "ячейки", "ячеек")}: сдай экзамен AB, чтобы открыть следующую`}
         </p>
         {failed && <p className="mt-1 text-center text-xs text-mr-bad">Картинка не загрузилась</p>}
       </div>

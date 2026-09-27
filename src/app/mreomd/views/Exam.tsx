@@ -35,6 +35,12 @@ export default function Exam() {
   const hydrated = useHydrated();
   const { activeExam, exams } = useStore();
   const resultId = params.get("result");
+  // An exam started on an older question bank refers to ids that no longer exist; finishing it
+  // would "pass" with zero questions (and open a prize cell), so it is dropped instead.
+  const staleExam = Boolean(activeExam && activeExam.qids.some((id) => !QUESTION_BY_ID[id]));
+  useEffect(() => {
+    if (staleExam) setActiveExam(null);
+  }, [staleExam]);
 
   if (!hydrated) return <div className="mr-card h-96 animate-pulse" aria-busy="true" />;
 
@@ -54,7 +60,7 @@ export default function Exam() {
       />
     );
   }
-  if (activeExam) return <ExamRun key={activeExam.startedAt} exam={activeExam} />;
+  if (activeExam && !staleExam) return <ExamRun key={activeExam.startedAt} exam={activeExam} />;
   return <ExamStart />;
 }
 
