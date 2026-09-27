@@ -42,3 +42,8 @@ next-env.d.ts
 
 # mreomd fetch cache
 /scripts/mreomd/.cache/
+
+# the original /mreomd prize picture must never be committed; only private/prize.enc
+prize.jpg
+prize.jpeg
+prize.png

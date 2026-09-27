@@ -25,6 +25,7 @@ import {
 } from "../lib/store";
 import type { Question } from "../lib/types";
 import { Icon } from "../components/Icon";
+import PrizeBoard, { cellOpenedBy } from "../components/PrizeBoard";
 import QuestionCard from "../components/QuestionCard";
 import SwipeNav from "../components/SwipeNav";
 import { CategoryPicker, Empty, PageTitle, Toggle, btn } from "../components/ui";
@@ -34,6 +35,12 @@ export default function Exam() {
   const hydrated = useHydrated();
   const { activeExam, exams } = useStore();
   const resultId = params.get("result");
+  // An exam started on an older question bank refers to ids that no longer exist; finishing it
+  // would "pass" with zero questions (and open a prize cell), so it is dropped instead.
+  const staleExam = Boolean(activeExam && activeExam.qids.some((id) => !QUESTION_BY_ID[id]));
+  useEffect(() => {
+    if (staleExam) setActiveExam(null);
+  }, [staleExam]);
 
   if (!hydrated) return <div className="mr-card h-96 animate-pulse" aria-busy="true" />;
 
@@ -53,7 +60,7 @@ export default function Exam() {
       />
     );
   }
-  if (activeExam) return <ExamRun key={activeExam.startedAt} exam={activeExam} />;
+  if (activeExam && !staleExam) return <ExamRun key={activeExam.startedAt} exam={activeExam} />;
   return <ExamStart />;
 }
 
@@ -380,7 +387,8 @@ function ExamRun({ exam }: { exam: ActiveExam }) {
 
 function ExamResult({ rec }: { rec: ExamRecord }) {
   const router = useRouter();
-  const { settings } = useStore();
+  const { settings, exams } = useStore();
+  const prizeCell = cellOpenedBy(exams, rec);
   const [onlyWrong, setOnlyWrong] = useState(rec.wrong.length > 0);
   const [savedTo, setSavedTo] = useState<string | null>(null);
   const questions = rec.qids.map((id) => QUESTION_BY_ID[id]).filter((q): q is Question => Boolean(q));
@@ -431,6 +439,15 @@ function ExamResult({ rec }: { rec: ExamRecord }) {
           </div>
         </div>
       </div>
+
+      {prizeCell !== null && (
+        <div className="mt-4 space-y-3">
+          <p className="rounded-2xl bg-mr-good-soft px-4 py-3 text-center font-semibold text-mr-good">
+            Умничка, любовь моя! Открыта ячейка {prizeCell} 🎁
+          </p>
+          <PrizeBoard exams={exams} highlight={prizeCell} />
+        </div>
+      )}
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Link href="/mreomd/exam" className={btn.primary}>

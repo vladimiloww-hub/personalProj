@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { normalizeCategory } from "../data/meta";
 import type { CategoryCode, Lang } from "./types";
 
 /**
@@ -88,7 +89,7 @@ export function createDefaultState(): State {
     v: 1,
     settings: {
       lang: "ru",
-      cat: "B",
+      cat: "AB",
       theme: "system",
       shuffle: false,
       autoNext: false,
@@ -127,7 +128,7 @@ export function sanitizeState(raw: unknown): State {
   const settings = isRecord(raw.settings) ? raw.settings : {};
   const s = base.settings;
   if (settings.lang === "ru" || settings.lang === "ro") s.lang = settings.lang;
-  if (typeof settings.cat === "string") s.cat = settings.cat as CategoryCode;
+  if (settings.cat !== undefined) s.cat = normalizeCategory(settings.cat);
   if (settings.theme === "light" || settings.theme === "dark" || settings.theme === "system")
     s.theme = settings.theme;
   if (typeof settings.shuffle === "boolean") s.shuffle = settings.shuffle;
@@ -177,7 +178,7 @@ export function sanitizeState(raw: unknown): State {
         (e): e is ExamRecord =>
           isRecord(e) && typeof e.id === "string" && Array.isArray(e.qids) && Array.isArray(e.wrong),
       )
-      .map((e) => ({ ...e, answers: isRecord(e.answers) ? e.answers : {} }));
+      .map((e) => ({ ...e, cat: normalizeCategory(e.cat), answers: isRecord(e.answers) ? e.answers : {} }));
   }
 
   if (
@@ -186,7 +187,7 @@ export function sanitizeState(raw: unknown): State {
     isRecord(raw.activeExam.answers) &&
     typeof raw.activeExam.deadline === "number"
   ) {
-    base.activeExam = raw.activeExam as unknown as ActiveExam;
+    base.activeExam = { ...(raw.activeExam as unknown as ActiveExam), cat: normalizeCategory(raw.activeExam.cat) };
   }
 
   return base;

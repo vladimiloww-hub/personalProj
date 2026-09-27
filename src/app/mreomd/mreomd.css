@@ -120,6 +120,38 @@
   display: none;
 }
 
+/* Same springy entrance as the Yippee cat sticker on the quest cards. */
+.mreo-root .mr-sticker {
+  animation: mr-sticker-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.mreo-root .mr-sticker-text {
+  animation: mr-sticker-pop 0.35s 0.1s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes mr-sticker-pop {
+  from { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+  to { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.mreo-root .mr-prize-cell {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.mreo-root .mr-prize-cell.is-new {
+  animation: mr-prize-open 1.2s 0.4s ease both;
+}
+@keyframes mr-prize-open {
+  0% { opacity: 1; transform: scale(1); }
+  40% { opacity: 1; transform: scale(1.06) rotate(2deg); }
+  100% { opacity: 0; transform: scale(0.6) rotate(-6deg); }
+}
+
+.mreo-root .mr-tiktok-feed {
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.mreo-root .mr-tiktok-feed::-webkit-scrollbar {
+  display: none;
+}
+
 @media print {
   .mreo-root .mr-noprint {
     display: none !important;

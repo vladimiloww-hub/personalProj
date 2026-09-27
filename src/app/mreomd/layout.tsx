@@ -16,6 +16,8 @@ export const metadata: Metadata = {
   },
   description:
     "Тренажёр теоретического экзамена ASP (Молдова): экзамен на время, тренировка по темам, поиск по вопросам, избранное и свои списки, работа над ошибками, дорожные знаки.",
+  // Private: reachable only through the secret link (see src/proxy.ts).
+  robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false, noimageindex: true } },
   openGraph: {
     title: "MREO.md — подготовка к экзамену ПДД в Молдове",
     description: "Экзамен ASP на время, вопросы по темам, поиск, избранное, ошибки и знаки.",
