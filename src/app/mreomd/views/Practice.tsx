@@ -18,6 +18,7 @@ import {
 import { FAVORITES_ID, getState, recordAnswer, setSettings, toggleInList, useHydrated, useStore } from "../lib/store";
 import { Icon } from "../components/Icon";
 import QuestionCard from "../components/QuestionCard";
+import SwipeNav from "../components/SwipeNav";
 import { Bar, Empty, ModeCard, PageTitle, Toggle, btn } from "../components/ui";
 
 export default function Practice() {
@@ -289,6 +290,7 @@ function PracticeRun() {
       ) : (
         q && (
           <>
+            <SwipeNav onPrev={() => go(pos - 1)} onNext={() => go(pos + 1)} canPrev={pos > 0} canNext>
             <QuestionCard
               key={q.id}
               q={q}
@@ -305,6 +307,7 @@ function PracticeRun() {
                 </span>
               }
             />
+            </SwipeNav>
             <div className="mt-4 flex items-center gap-2">
               <button type="button" className={btn.secondary} onClick={() => go(pos - 1)} disabled={pos === 0}>
                 <Icon name="left" size={16} /> Назад
