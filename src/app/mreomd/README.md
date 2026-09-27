@@ -18,9 +18,12 @@
 
 ## Формат вопросов
 
-База — массив `QUESTIONS` в `data/questions.ts` (тип `Question` в `lib/types.ts`).
-Сейчас там временный набор (`IS_DEMO_BANK = true`); официальную базу ASP нужно
-положить на его место и выставить `IS_DEMO_BANK = false`.
+База — массив `QUESTIONS` в `data/questions.ts` (тип `Question` в `lib/types.ts`),
+данные — `data/questions.json`. Это официальная база ASP (RU + RO), её собирает
+`python scripts/mreomd/fetch_autotest.py` из API auto-test.online: категория B —
+общие вопросы с билетами 1–24, C/D/E/F — дополнительные вопросы с `veh`
+(truck / bus / trailer / trolley). Ответы кэшируются в `scripts/mreomd/.cache/`,
+`--refresh` перекачивает всё заново.
 
 ```ts
 {
@@ -33,7 +36,7 @@
   a: [{ ru: "…", ro: "…" }, …],
   c: 1,                      // индекс правильного ответа в a
   e: { ru: "…", ro: "…" },   // пояснение (необязательно)
-  img: { kind: "image", src: "/mreomd/q/123.jpg" }, // картинка из public/, или { kind: "sign", id: "p-stop" }
+  img: { kind: "image", src: "/mreomd/q/B123.webp" }, // картинка из public/, или { kind: "sign", id: "p-stop" }
 }
 ```
 
