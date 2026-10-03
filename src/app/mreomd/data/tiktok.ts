@@ -66,11 +66,20 @@ export function shuffleFeed(videos: TikTokVideo[], rnd: () => number = Math.rand
     const j = Math.floor(rnd() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
+  const left = new Map<string, number>();
+  for (const v of pool) left.set(v.author, (left.get(v.author) ?? 0) + 1);
   const out: TikTokVideo[] = [];
   while (pool.length) {
+    // Take the creator with the most videos left (other than the previous one), so repeats
+    // happen only when one creator has more than half of what's left.
     const prev = out[out.length - 1]?.author;
-    const k = pool.findIndex((v) => v.author !== prev);
-    out.push(...pool.splice(k === -1 ? 0 : k, 1));
+    let k = -1;
+    pool.forEach((v, i) => {
+      if (v.author !== prev && (k === -1 || left.get(v.author)! > left.get(pool[k].author)!)) k = i;
+    });
+    const [v] = pool.splice(k === -1 ? 0 : k, 1);
+    left.set(v.author, left.get(v.author)! - 1);
+    out.push(v);
   }
   return out;
 }
