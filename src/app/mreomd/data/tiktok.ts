@@ -5,7 +5,9 @@
  * /api/mreomd/tiktok reads the latest videos of TIKTOK_CREATORS from their public Creator
  * Profile Embed pages and the feed shuffles them. TIKTOK_VIDEOS is a snapshot of those videos
  * (taken 2026-09-27) used as the first render and as the fallback when TikTok is unreachable.
- * To add a creator, append the name after "@" in their profile link to TIKTOK_CREATORS.
+ * To add a creator, append the name after "@" in their profile link to TIKTOK_CREATORS
+ * (as { author, latest: n } to keep only their n newest videos). Single videos from creators
+ * that aren't followed go to TIKTOK_PINNED and are always in the feed.
  */
 export interface TikTokVideo {
   id: string;
@@ -13,13 +15,21 @@ export interface TikTokVideo {
   caption?: string;
 }
 
-export const TIKTOK_CREATORS = [
+export type TikTokCreator = string | { author: string; latest: number };
+
+export const TIKTOK_CREATORS: TikTokCreator[] = [
   "heart_of_black_cat_",
   "ibhanoxyennen",
   "mabletheangel",
   "ai_giorgis",
   "qyupiemayo",
   "mafanyatwitch",
+  { author: "verydailydih", latest: 6 },
+];
+
+export const TIKTOK_PINNED: TikTokVideo[] = [
+  { id: "7691398206936173846", author: "vincegzatz6" },
+  { id: "7691761765771742486", author: "vincegzatz6" },
 ];
 
 export const TIKTOK_VIDEOS: TikTokVideo[] = [
@@ -95,6 +105,13 @@ export const TIKTOK_VIDEOS: TikTokVideo[] = [
   { id: "7685355659251944721", author: "mafanyatwitch" },
   { id: "7685107600974728464", author: "mafanyatwitch" },
   { id: "7683899574397766928", author: "mafanyatwitch" },
+  { id: "7691975216653815062", author: "verydailydih" },
+  { id: "7691805505932594454", author: "verydailydih" },
+  { id: "7691725730111081750", author: "verydailydih" },
+  { id: "7691671871007313174", author: "verydailydih" },
+  { id: "7691605861885693206", author: "verydailydih" },
+  { id: "7666789703227542806", author: "verydailydih" },
+  ...TIKTOK_PINNED,
 ];
 
 export function tiktokPlayerUrl(id: string) {

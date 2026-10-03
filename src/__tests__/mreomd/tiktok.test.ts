@@ -1,5 +1,5 @@
 import { shuffleFeed, type TikTokVideo } from '@/app/mreomd/data/tiktok'
-import { parseCreatorEmbed } from '@/lib/tiktokCreators'
+import { newestVideos, parseCreatorEmbed } from '@/lib/tiktokCreators'
 
 describe('TikTok feed', () => {
   it('reads unique video ids of the creator from an embed page', () => {
@@ -11,6 +11,14 @@ describe('TikTok feed', () => {
     expect(parseCreatorEmbed(html, 'cat_1')).toEqual([
       { id: '7688020602724142358', author: 'cat_1' },
       { id: '7687800668396080387', author: 'cat_1' },
+    ])
+  })
+
+  it('keeps the newest videos even when an older one is pinned first', () => {
+    const v = (id: string) => ({ id, author: 'a' })
+    expect(newestVideos([v('7666789703227542806'), v('7691975216653815062'), v('7691605861885693206')], 2)).toEqual([
+      v('7691975216653815062'),
+      v('7691605861885693206'),
     ])
   })
 
