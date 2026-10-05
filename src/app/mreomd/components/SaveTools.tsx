@@ -191,7 +191,6 @@ export function NoteEditor({ qid, autoFocus = false }: { qid: string; autoFocus?
         onBlur={() => commit(text)}
         onKeyDown={(e) => e.stopPropagation()}
         rows={3}
-        maxLength={2000}
         placeholder="Ваша заметка: как запомнить, ссылка на пункт правил, почему ошиблись…"
         className="w-full resize-y rounded-lg bg-transparent px-1 text-sm outline-none"
         aria-label="Заметка к вопросу"

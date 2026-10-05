@@ -41,8 +41,8 @@ export function isMistake(stats: State["stats"], qid: string) {
   return stats[qid]?.last === "w";
 }
 
-/** Questions sorted by how often they were answered wrong (most troublesome first). */
-export function hardest(questions: readonly Question[], stats: State["stats"], limit = 50): Question[] {
+/** Every question answered wrong at least once, most troublesome first; `limit` trims the list for previews. */
+export function hardest(questions: readonly Question[], stats: State["stats"], limit = Infinity): Question[] {
   return questions
     .filter((q) => (stats[q.id]?.wrong ?? 0) > 0)
     .sort((a, b) => {

@@ -168,7 +168,7 @@ export function sanitizeState(raw: unknown): State {
 
   if (isRecord(raw.notes)) {
     for (const [id, v] of Object.entries(raw.notes)) {
-      if (typeof v === "string" && v.trim()) base.notes[id] = v.slice(0, 2000);
+      if (typeof v === "string" && v.trim()) base.notes[id] = v;
     }
   }
 
@@ -339,7 +339,7 @@ export function deleteList(listId: string) {
 export function setNote(qid: string, text: string) {
   update((s) => {
     const notes = { ...s.notes };
-    if (text.trim()) notes[qid] = text.slice(0, 2000);
+    if (text.trim()) notes[qid] = text;
     else delete notes[qid];
     return { ...s, notes };
   });
@@ -358,7 +358,7 @@ export function answerActiveExam(qid: string, answer: number) {
 }
 
 export function addExamRecord(rec: ExamRecord) {
-  update((s) => ({ ...s, exams: [rec, ...s.exams].slice(0, 100), activeExam: null }));
+  update((s) => ({ ...s, exams: [rec, ...s.exams], activeExam: null }));
 }
 
 export function resetProgress() {
