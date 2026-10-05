@@ -15,6 +15,9 @@ const IMAGES = [
   "sticker8.webp",
   "sticker9.webp",
   "sticker10.webp",
+  ...Array.from({ length: 15 }, (_, i) => `sticker${i + 11}.webp`),
+  "photo1.webp",
+  "photo2.webp",
 ];
 /** Transparent VP9 WebM: Safari can't render the alpha channel, so these are skipped there. */
 const VIDEOS = ["sticker.webm", "sticker2.webm", "sticker3.webm", "sticker4.webm", "stickerYipeeCat.webm"];
@@ -98,7 +101,11 @@ export default function StickerBurst() {
           />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={burst.src} alt="" className="h-full w-full object-contain" />
+          <img
+            src={burst.src}
+            alt=""
+            className={`h-full w-full ${burst.src.includes("/photo") ? "rounded-2xl object-cover" : "object-contain"}`}
+          />
         )}
       </div>
       <p
