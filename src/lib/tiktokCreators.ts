@@ -1,4 +1,4 @@
-import type { TikTokVideo } from '@/app/mreomd/data/tiktok'
+import type { TikTokCreator, TikTokVideo } from '@/app/mreomd/data/tiktok'
 
 const USERNAME = /^[A-Za-z0-9._]{2,24}$/
 
@@ -31,8 +31,18 @@ async function fetchCreator(author: string): Promise<TikTokVideo[]> {
   }
 }
 
+/** Newest `n` videos; ids grow with upload time, so this skips pinned older videos too. */
+export function newestVideos(videos: TikTokVideo[], n: number): TikTokVideo[] {
+  return [...videos].sort((a, b) => (BigInt(b.id) > BigInt(a.id) ? 1 : -1)).slice(0, n)
+}
+
+async function fetchCreatorEntry(creator: TikTokCreator): Promise<TikTokVideo[]> {
+  if (typeof creator === 'string') return fetchCreator(creator)
+  return newestVideos(await fetchCreator(creator.author), creator.latest)
+}
+
 /** Latest videos of every creator; creators that fail to load are skipped. */
-export async function fetchCreatorVideos(authors: readonly string[]): Promise<TikTokVideo[]> {
-  const lists = await Promise.all(authors.map(fetchCreator))
+export async function fetchCreatorVideos(creators: readonly TikTokCreator[]): Promise<TikTokVideo[]> {
+  const lists = await Promise.all(creators.map(fetchCreatorEntry))
   return lists.flat()
 }

@@ -1,4 +1,4 @@
-import { TIKTOK_CREATORS, TIKTOK_VIDEOS, type TikTokVideo } from '@/app/mreomd/data/tiktok'
+import { TIKTOK_CREATORS, TIKTOK_PINNED, TIKTOK_VIDEOS, type TikTokVideo } from '@/app/mreomd/data/tiktok'
 import { fetchCreatorVideos } from '@/lib/tiktokCreators'
 
 export const dynamic = 'force-dynamic'
@@ -14,7 +14,7 @@ let cache: { at: number; videos: TikTokVideo[] } | null = null
 export async function GET() {
   if (!cache || Date.now() - cache.at > TTL_MS) {
     const fresh = await fetchCreatorVideos(TIKTOK_CREATORS)
-    if (fresh.length > 0) cache = { at: Date.now(), videos: fresh }
+    if (fresh.length > 0) cache = { at: Date.now(), videos: [...fresh, ...TIKTOK_PINNED] }
   }
   return Response.json(
     { videos: cache?.videos ?? TIKTOK_VIDEOS, live: Boolean(cache) },
