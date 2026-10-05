@@ -41,8 +41,25 @@ async function fetchCreatorEntry(creator: TikTokCreator): Promise<TikTokVideo[]>
   return newestVideos(await fetchCreator(creator.author), creator.latest)
 }
 
-/** Latest videos of every creator; creators that fail to load are skipped. */
-export async function fetchCreatorVideos(creators: readonly TikTokCreator[]): Promise<TikTokVideo[]> {
-  const lists = await Promise.all(creators.map(fetchCreatorEntry))
-  return lists.flat()
+/**
+ * Latest videos of every creator. A creator TikTok doesn't answer for (it rate-limits embed
+ * pages now and then) keeps their videos from `fallback`; `live` is true when any creator loaded.
+ */
+export async function fetchCreatorVideos(
+  creators: readonly TikTokCreator[],
+  fallback: readonly TikTokVideo[] = [],
+): Promise<{ videos: TikTokVideo[]; live: boolean }> {
+  let live = false
+  const lists = await Promise.all(
+    creators.map(async (creator) => {
+      const videos = await fetchCreatorEntry(creator)
+      if (videos.length > 0) {
+        live = true
+        return videos
+      }
+      const author = typeof creator === 'string' ? creator : creator.author
+      return fallback.filter((v) => v.author === author)
+    }),
+  )
+  return { videos: lists.flat(), live }
 }

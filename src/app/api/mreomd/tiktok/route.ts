@@ -8,13 +8,13 @@ let cache: { at: number; videos: TikTokVideo[] } | null = null
 
 /**
  * Latest videos of the feed's creators, refreshed at most every 6 hours per server instance.
- * Falls back to the snapshot in data/tiktok.ts when TikTok can't be reached.
+ * Creators TikTok does not answer for keep their videos from the snapshot in data/tiktok.ts.
  * Access is checked by src/proxy.ts like the rest of /api/mreomd.
  */
 export async function GET() {
   if (!cache || Date.now() - cache.at > TTL_MS) {
-    const fresh = await fetchCreatorVideos(TIKTOK_CREATORS)
-    if (fresh.length > 0) cache = { at: Date.now(), videos: [...fresh, ...TIKTOK_PINNED] }
+    const fresh = await fetchCreatorVideos(TIKTOK_CREATORS, TIKTOK_VIDEOS)
+    if (fresh.live) cache = { at: Date.now(), videos: [...fresh.videos, ...TIKTOK_PINNED] }
   }
   return Response.json(
     { videos: cache?.videos ?? TIKTOK_VIDEOS, live: Boolean(cache) },

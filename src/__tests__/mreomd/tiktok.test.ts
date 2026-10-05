@@ -1,5 +1,5 @@
 import { shuffleFeed, type TikTokVideo } from '@/app/mreomd/data/tiktok'
-import { newestVideos, parseCreatorEmbed } from '@/lib/tiktokCreators'
+import { fetchCreatorVideos, newestVideos, parseCreatorEmbed } from '@/lib/tiktokCreators'
 
 describe('TikTok feed', () => {
   it('reads unique video ids of the creator from an embed page', () => {
@@ -20,6 +20,24 @@ describe('TikTok feed', () => {
       v('7691975216653815062'),
       v('7691605861885693206'),
     ])
+  })
+
+  it('keeps the snapshot videos of a creator TikTok does not answer for', async () => {
+    const fetchMock = vi.fn(async (url: string) =>
+      url.endsWith('@up')
+        ? new Response('<a href="https://www.tiktok.com/@up/video/7692606562854047006">')
+        : new Response('overload-protect triggered', { status: 503 }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    try {
+      const snapshot = [{ id: '7600000000000000001', author: 'down' }, { id: '7600000000000000002', author: 'up' }]
+      expect(await fetchCreatorVideos(['up', { author: 'down', latest: 12 }], snapshot)).toEqual({
+        videos: [{ id: '7692606562854047006', author: 'up' }, { id: '7600000000000000001', author: 'down' }],
+        live: true,
+      })
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 
   it('shuffles without losing videos and avoids repeating a creator', () => {
