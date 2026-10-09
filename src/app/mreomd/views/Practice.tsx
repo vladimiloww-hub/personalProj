@@ -18,6 +18,7 @@ import {
 import { FAVORITES_ID, getState, recordAnswer, setSettings, toggleInList, useHydrated, useStore } from "../lib/store";
 import { Icon } from "../components/Icon";
 import QuestionCard from "../components/QuestionCard";
+import { burstHearts } from "../components/Celebrate";
 import { celebrateAnswer } from "../components/StickerBurst";
 import SwipeNav from "../components/SwipeNav";
 import { Bar, Empty, ModeCard, PageTitle, Toggle, btn } from "../components/ui";
@@ -122,6 +123,7 @@ function PracticeRun() {
       if (autoTimer.current) clearTimeout(autoTimer.current);
       setNoteOpen(false);
       setPos(Math.max(0, Math.min(questions.length, to)));
+      if (questions.length > 0 && to >= questions.length) burstHearts(28);
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
     [questions.length],
@@ -134,6 +136,7 @@ function PracticeRun() {
       setAnswers((prev) => ({ ...prev, [q.id]: a }));
       recordAnswer(q.id, ok);
       celebrateAnswer(ok);
+      if (ok) burstHearts();
       if (ok && settings.autoNext) {
         autoTimer.current = setTimeout(() => go(pos + 1), 700);
       }

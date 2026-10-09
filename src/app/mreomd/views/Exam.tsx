@@ -24,6 +24,7 @@ import {
   type ExamRecord,
 } from "../lib/store";
 import type { Question } from "../lib/types";
+import { celebrateExam } from "../components/Celebrate";
 import { Icon } from "../components/Icon";
 import PrizeBoard, { cellOpenedBy } from "../components/PrizeBoard";
 import QuestionCard from "../components/QuestionCard";
@@ -192,6 +193,7 @@ function ExamRun({ exam }: { exam: ActiveExam }) {
         answers: current.answers,
       };
       addExamRecord(rec);
+      celebrateExam(rec.passed);
       router.replace(`/mreomd/exam?result=${rec.id}`);
       window.scrollTo({ top: 0 });
     },

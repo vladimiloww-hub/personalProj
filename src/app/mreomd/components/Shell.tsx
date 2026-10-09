@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { setSettings, useStore } from "../lib/store";
 import { Icon, type IconName } from "./Icon";
+import Celebrate from "./Celebrate";
 import StickerBurst from "./StickerBurst";
 import TikTokFeed from "./TikTokFeed";
 
@@ -94,6 +95,7 @@ export default function Shell({
       </main>
 
       <StickerBurst />
+      <Celebrate />
 
       <footer className="mr-noprint mx-auto hidden w-full max-w-6xl px-4 pb-8 text-xs text-mr-muted lg:block">
         Неофициальный тренажёр. Формат экзамена и нормы — по данным ASP и РЦР (ПП № 357/2009); проверяйте
