@@ -16,6 +16,7 @@ export type PracticeMode =
   | "custom";
 
 export const RANDOM_SIZE = 20;
+export const MISTAKES_SIZE = 20;
 const CUSTOM_KEY = "mreomd:custom";
 
 export interface PracticeSession {
@@ -77,13 +78,20 @@ export function buildSession(
         questions: pool.filter((q) => !stats[q.id]),
         empty: "Вы уже ответили на все вопросы этой категории. Отличная работа!",
       };
-    case "mistakes":
+    case "mistakes": {
+      // A random handful each time — a 100+ question wall of mistakes is too much in one go.
+      const all = pool.filter((q) => stats[q.id]?.last === "w");
+      const picked = shuffle(all).slice(0, MISTAKES_SIZE);
       return {
         title: "Работа над ошибками",
-        subtitle: "Вопросы, на которые последний ответ был неверным. Верный ответ убирает вопрос из списка.",
-        questions: pool.filter((q) => stats[q.id]?.last === "w"),
+        subtitle:
+          all.length > picked.length
+            ? `${picked.length} случайных из ${all.length} ошибок. Верный ответ убирает вопрос из списка.`
+            : "Вопросы, на которые последний ответ был неверным. Верный ответ убирает вопрос из списка.",
+        questions: picked,
         empty: "Ошибок нет. Ответы, данные неверно, будут появляться здесь.",
       };
+    }
     case "hard":
       return {
         title: "Сложные вопросы",
