@@ -16,7 +16,7 @@ export type PracticeMode =
   | "custom";
 
 export const RANDOM_SIZE = 20;
-export const MISTAKES_SIZE = 20;
+export const HARD_SIZE = 20;
 const CUSTOM_KEY = "mreomd:custom";
 
 export interface PracticeSession {
@@ -78,27 +78,27 @@ export function buildSession(
         questions: pool.filter((q) => !stats[q.id]),
         empty: "Вы уже ответили на все вопросы этой категории. Отличная работа!",
       };
-    case "mistakes": {
-      // A random handful each time — a 100+ question wall of mistakes is too much in one go.
-      const all = pool.filter((q) => stats[q.id]?.last === "w");
-      const picked = shuffle(all).slice(0, MISTAKES_SIZE);
+    case "mistakes":
       return {
         title: "Работа над ошибками",
-        subtitle:
-          all.length > picked.length
-            ? `${picked.length} случайных из ${all.length} ошибок. Верный ответ убирает вопрос из списка.`
-            : "Вопросы, на которые последний ответ был неверным. Верный ответ убирает вопрос из списка.",
-        questions: picked,
+        subtitle: "Вопросы, на которые последний ответ был неверным. Верный ответ убирает вопрос из списка.",
+        questions: pool.filter((q) => stats[q.id]?.last === "w"),
         empty: "Ошибок нет. Ответы, данные неверно, будут появляться здесь.",
       };
-    }
-    case "hard":
+    case "hard": {
+      // A random handful each time — a 100+ question wall of hard ones is too much in one go.
+      const all = hardest(pool, stats);
+      const picked = shuffle(all).slice(0, HARD_SIZE);
       return {
         title: "Сложные вопросы",
-        subtitle: "Вопросы, в которых вы ошибались чаще всего",
-        questions: hardest(pool, stats),
+        subtitle:
+          all.length > picked.length
+            ? `${picked.length} случайных из ${all.length} вопросов, в которых вы ошибались`
+            : "Вопросы, в которых вы ошибались чаще всего",
+        questions: picked,
         empty: "Пока нет вопросов с ошибками.",
       };
+    }
     case "list": {
       const list = state.lists.find((l) => l.id === (params.list ?? FAVORITES_ID));
       return {
