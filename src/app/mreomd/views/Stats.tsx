@@ -281,6 +281,7 @@ function Settings() {
         <Toggle checked={settings.shuffle} onChange={(v) => setSettings({ shuffle: v })} label="Перемешивать варианты ответов" hint="В тренировке и на экзамене" />
         <Toggle checked={settings.autoNext} onChange={(v) => setSettings({ autoNext: v })} label="Автопереход после верного ответа" hint="Только в тренировке" />
         <Toggle checked={settings.strict} onChange={(v) => setSettings({ strict: v })} label="Строгий режим экзамена" hint="Завершать при превышении допустимых ошибок" />
+        <Toggle checked={settings.hidePrize} onChange={(v) => setSettings({ hidePrize: v })} label="Скрыть приз" hint="Блок с картинкой на главной и после экзамена" />
       </div>
 
       <h3 className="mb-2 mt-5 text-sm font-semibold">Резервная копия</h3>

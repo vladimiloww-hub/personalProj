@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { plural } from "../lib/i18n";
-import type { ExamRecord } from "../lib/store";
+import { setSettings, useStore, type ExamRecord } from "../lib/store";
+import { Icon } from "./Icon";
+import { btn } from "./ui";
 
 /** Grid laid over the prize picture (3:4, like a phone photo). */
 export const PRIZE_COLS = 3;
@@ -41,62 +43,76 @@ export default function PrizeBoard({ exams, highlight }: { exams: ExamRecord[]; 
   const openSet = useMemo(() => new Set(ORDER.slice(0, opened)), [opened]);
   const newCell = highlight ? ORDER[highlight - 1] : null;
   const [failed, setFailed] = useState(false);
+  const hidden = useStore().settings.hidePrize;
   const left = PRIZE_CELLS - opened;
 
   return (
     <section className="mr-card overflow-hidden" aria-label="Приз">
-      <div className="flex items-center justify-between gap-3 border-b border-mr-line px-4 py-3">
+      <div className={`flex items-center justify-between gap-3 px-4 py-3 ${hidden ? "" : "border-b border-mr-line"}`}>
         <div>
           <h2 className="font-semibold">🎁 Твой приз</h2>
           <p className="text-xs text-mr-muted">
-            Каждый сданный экзамен категории AB открывает одну ячейку
+            {hidden ? "Приз скрыт" : "Каждый сданный экзамен категории AB открывает одну ячейку"}
           </p>
         </div>
-        <span className="shrink-0 text-sm font-semibold tabular-nums">
-          {opened} / {PRIZE_CELLS}
-        </span>
-      </div>
-      <div className="p-3">
-        <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-xl bg-mr-surface-2">
-          {opened > 0 && !failed && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={SRC}
-              alt="Приз"
-              draggable={false}
-              onError={() => setFailed(true)}
-              onContextMenu={(e) => e.preventDefault()}
-              className="absolute inset-0 h-full w-full select-none object-cover"
-            />
-          )}
-          <div
-            className="absolute inset-0 grid gap-[3px]"
-            style={{ gridTemplateColumns: `repeat(${PRIZE_COLS}, 1fr)`, gridTemplateRows: `repeat(${PRIZE_ROWS}, 1fr)` }}
+        <div className="flex shrink-0 items-center gap-1">
+          <span className="text-sm font-semibold tabular-nums">
+            {opened} / {PRIZE_CELLS}
+          </span>
+          <button
+            type="button"
+            className={btn.ghost}
+            onClick={() => setSettings({ hidePrize: !hidden })}
+            aria-expanded={!hidden}
           >
-            {Array.from({ length: PRIZE_CELLS }, (_, i) => {
-              const isNew = i === newCell;
-              const open = openSet.has(i) && !isNew;
-              return (
-                <div
-                  key={i}
-                  className={`mr-prize-cell flex items-center justify-center rounded-md bg-gradient-to-br from-[#f7c600] to-[#e0a100] text-2xl text-[#1a1a1a] ${
-                    open ? "opacity-0" : ""
-                  } ${isNew ? "is-new" : ""}`}
-                  aria-hidden="true"
-                >
-                  🔒
-                </div>
-              );
-            })}
-          </div>
+            <Icon name="eye" size={16} />
+            {hidden ? "Показать" : "Скрыть"}
+          </button>
         </div>
-        <p className="mt-3 text-center text-sm text-mr-muted">
-          {left === 0
-            ? "Все ячейки открыты! 🎉"
-            : `Осталось ${left} ${plural(left, "ячейка", "ячейки", "ячеек")}: сдай экзамен AB, чтобы открыть следующую`}
-        </p>
-        {failed && <p className="mt-1 text-center text-xs text-mr-bad">Картинка не загрузилась</p>}
       </div>
+      {!hidden && (
+        <div className="p-3">
+          <div className="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-xl bg-mr-surface-2">
+            {opened > 0 && !failed && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={SRC}
+                alt="Приз"
+                draggable={false}
+                onError={() => setFailed(true)}
+                onContextMenu={(e) => e.preventDefault()}
+                className="absolute inset-0 h-full w-full select-none object-cover"
+              />
+            )}
+            <div
+              className="absolute inset-0 grid gap-[3px]"
+              style={{ gridTemplateColumns: `repeat(${PRIZE_COLS}, 1fr)`, gridTemplateRows: `repeat(${PRIZE_ROWS}, 1fr)` }}
+            >
+              {Array.from({ length: PRIZE_CELLS }, (_, i) => {
+                const isNew = i === newCell;
+                const open = openSet.has(i) && !isNew;
+                return (
+                  <div
+                    key={i}
+                    className={`mr-prize-cell flex items-center justify-center rounded-md bg-gradient-to-br from-[#f7c600] to-[#e0a100] text-2xl text-[#1a1a1a] ${
+                      open ? "opacity-0" : ""
+                    } ${isNew ? "is-new" : ""}`}
+                    aria-hidden="true"
+                  >
+                    🔒
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <p className="mt-3 text-center text-sm text-mr-muted">
+            {left === 0
+              ? "Все ячейки открыты! 🎉"
+              : `Осталось ${left} ${plural(left, "ячейка", "ячейки", "ячеек")}: сдай экзамен AB, чтобы открыть следующую`}
+          </p>
+          {failed && <p className="mt-1 text-center text-xs text-mr-bad">Картинка не загрузилась</p>}
+        </div>
+      )}
     </section>
   );
 }
