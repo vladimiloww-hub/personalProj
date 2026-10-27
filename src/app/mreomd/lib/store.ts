@@ -61,6 +61,8 @@ export interface Settings {
   autoNext: boolean;
   /** Finish the exam as soon as the error limit is exceeded. */
   strict: boolean;
+  /** Collapse the prize board so the picture isn't shown. */
+  hidePrize: boolean;
 }
 
 export interface State {
@@ -94,6 +96,7 @@ export function createDefaultState(): State {
       shuffle: false,
       autoNext: false,
       strict: false,
+      hidePrize: false,
     },
     stats: {},
     lists: [
@@ -134,6 +137,7 @@ export function sanitizeState(raw: unknown): State {
   if (typeof settings.shuffle === "boolean") s.shuffle = settings.shuffle;
   if (typeof settings.autoNext === "boolean") s.autoNext = settings.autoNext;
   if (typeof settings.strict === "boolean") s.strict = settings.strict;
+  if (typeof settings.hidePrize === "boolean") s.hidePrize = settings.hidePrize;
 
   if (isRecord(raw.stats)) {
     for (const [id, v] of Object.entries(raw.stats)) {

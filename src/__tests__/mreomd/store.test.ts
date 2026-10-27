@@ -42,6 +42,12 @@ describe('sanitizeState', () => {
     expect(s.settings.theme).toBe('system')
     expect(s.notes).toEqual({ a: 'hi' })
   })
+
+  it('keeps the hidden-prize choice and ignores non-boolean values', () => {
+    expect(createDefaultState().settings.hidePrize).toBe(false)
+    expect(sanitizeState({ settings: { hidePrize: true } }).settings.hidePrize).toBe(true)
+    expect(sanitizeState({ settings: { hidePrize: 'yes' } }).settings.hidePrize).toBe(false)
+  })
 })
 
 describe('actions', () => {
