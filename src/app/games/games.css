@@ -1,0 +1,306 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-wg-bg: var(--wg-bg);
+  --color-wg-surface: var(--wg-surface);
+  --color-wg-surface-2: var(--wg-surface-2);
+  --color-wg-text: var(--wg-text);
+  --color-wg-muted: var(--wg-muted);
+  --color-wg-line: var(--wg-line);
+  --color-wg-correct: var(--wg-correct);
+  --color-wg-present: var(--wg-present);
+  --color-wg-absent: var(--wg-absent);
+  --color-wg-p1: var(--wg-p1);
+  --color-wg-p2: var(--wg-p2);
+  --color-wg-pc: var(--pc);
+  --font-wg-sans: var(--font-wg-inter);
+  --font-wg-display: var(--font-wg-unbounded);
+}
+
+.games-root {
+  --wg-bg: #f5f3ee;
+  --wg-surface: #ffffff;
+  --wg-surface-2: #ebe8e1;
+  --wg-text: #1c1b18;
+  --wg-muted: #6d6a62;
+  --wg-line: #d9d5cb;
+  --wg-key: #dedad1;
+  --wg-key-absent: #8a867d;
+  --wg-key-absent-ink: #ffffff;
+  --wg-correct: #4f9d58;
+  --wg-present: #d29e22;
+  --wg-absent: #7d7a72;
+  --wg-p1: #e0522f;
+  --wg-p2: #2f6fd6;
+  --wg-shadow: 0 1px 2px rgb(30 25 15 / 0.06), 0 4px 16px rgb(30 25 15 / 0.06);
+  --pc: var(--wg-text);
+
+  background: var(--wg-bg);
+  color: var(--wg-text);
+  font-family: var(--font-wg-inter), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color-scheme: light;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  .games-root {
+    --wg-bg: #121211;
+    --wg-surface: #1c1c1a;
+    --wg-surface-2: #262623;
+    --wg-text: #f1efe9;
+    --wg-muted: #9d998f;
+    --wg-line: #34332f;
+    --wg-key: #5f5d57;
+    --wg-key-absent: #262523;
+    --wg-key-absent-ink: #7f7c74;
+    --wg-correct: #4e9a57;
+    --wg-present: #c39320;
+    --wg-absent: #45443f;
+    --wg-p1: #ff7650;
+    --wg-p2: #6b9fff;
+    --wg-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
+    color-scheme: dark;
+  }
+}
+
+@layer components {
+  .wg-p0 {
+    --pc: var(--wg-p1);
+  }
+  .wg-p1 {
+    --pc: var(--wg-p2);
+  }
+
+  /* ——— board ——— */
+
+  /* A box the board shrinks into, whichever of width or height runs out first. */
+  .wg-fit {
+    container-type: size;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  .wg-board {
+    --gap: clamp(3px, 1.2cqmin, 6px);
+    container-type: inline-size;
+    display: grid;
+    gap: var(--gap);
+    /* --reserve: height of anything stacked with the board inside its .wg-fit box */
+    width: min(
+      100cqw,
+      calc((100cqh - var(--reserve, 0px)) * var(--cols) / var(--rows) - 6px),
+      var(--board-max, 340px)
+    );
+  }
+
+  .wg-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    gap: var(--gap);
+  }
+
+  .wg-row-dot {
+    position: absolute;
+    top: 50%;
+    right: calc(100% + 6px);
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--pc);
+    transform: translateY(-50%);
+  }
+
+  .wg-tile {
+    --mark: transparent;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--wg-line);
+    border-radius: clamp(3px, 2cqi, 8px);
+    font-weight: 800;
+    font-size: calc(100cqi / var(--cols) * 0.5);
+    line-height: 1;
+    text-transform: uppercase;
+    user-select: none;
+  }
+  .wg-tile[data-filled] {
+    border-color: var(--wg-muted);
+    animation: wg-pop 0.12s ease-out;
+  }
+  .wg-tile[data-hint] {
+    color: var(--wg-muted);
+    opacity: 0.45;
+  }
+  .wg-tile[data-mark="correct"] {
+    --mark: var(--wg-correct);
+  }
+  .wg-tile[data-mark="present"] {
+    --mark: var(--wg-present);
+  }
+  .wg-tile[data-mark="absent"] {
+    --mark: var(--wg-absent);
+  }
+  .wg-tile[data-mark] {
+    background: var(--mark);
+    border-color: var(--mark);
+    color: #fff;
+  }
+  .wg-tile[data-reveal] {
+    animation: wg-flip 0.5s ease both;
+    animation-delay: calc(var(--i) * 180ms);
+  }
+  .wg-row[data-win] .wg-tile[data-reveal] {
+    animation:
+      wg-flip 0.5s ease both calc(var(--i) * 180ms),
+      wg-bounce 0.45s ease calc(var(--i) * 90ms + 1.25s);
+  }
+  .wg-row[data-shake] {
+    animation: wg-shake 0.4s ease;
+  }
+
+  /* ——— keyboard ——— */
+
+  .wg-key {
+    min-width: 0;
+    height: clamp(36px, 6.6dvh, 58px);
+    border-radius: 6px;
+    background: var(--wg-key);
+    color: var(--wg-text);
+    font-weight: 700;
+    font-size: clamp(13px, 3.7vw, 18px);
+    text-transform: uppercase;
+    display: grid;
+    place-items: center;
+    touch-action: manipulation;
+    user-select: none;
+    transition:
+      background-color 0.2s,
+      transform 0.06s;
+  }
+  .wg-key:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+  .wg-key:disabled {
+    opacity: 0.45;
+  }
+  .wg-key[data-mark="correct"] {
+    background: var(--wg-correct);
+    color: #fff;
+  }
+  .wg-key[data-mark="present"] {
+    background: var(--wg-present);
+    color: #fff;
+  }
+  .wg-key[data-mark="absent"] {
+    background: var(--wg-key-absent);
+    color: var(--wg-key-absent-ink);
+  }
+
+  /* ——— bits ——— */
+
+  .wg-card {
+    background: var(--wg-surface);
+    border: 1px solid var(--wg-line);
+    border-radius: 18px;
+    box-shadow: var(--wg-shadow);
+  }
+
+  .wg-toast {
+    animation: wg-toast-in 0.18s ease-out;
+  }
+
+  .wg-sheet {
+    animation: wg-sheet-in 0.22s ease-out;
+  }
+
+  .wg-turn {
+    animation: wg-turn 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes wg-pop {
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes wg-flip {
+  0% {
+    transform: rotateX(0);
+    background: transparent;
+    border-color: var(--wg-muted);
+    color: var(--wg-text);
+  }
+  50% {
+    transform: rotateX(90deg);
+    background: transparent;
+    border-color: var(--wg-muted);
+    color: var(--wg-text);
+  }
+  50.01% {
+    transform: rotateX(90deg);
+    background: var(--mark);
+    border-color: var(--mark);
+    color: #fff;
+  }
+  100% {
+    transform: rotateX(0);
+    background: var(--mark);
+    border-color: var(--mark);
+    color: #fff;
+  }
+}
+
+@keyframes wg-bounce {
+  40% {
+    transform: translateY(-28%);
+  }
+  70% {
+    transform: translateY(4%);
+  }
+}
+
+@keyframes wg-shake {
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes wg-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes wg-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes wg-turn {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .games-root *,
+  .games-root *::before,
+  .games-root *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+}
