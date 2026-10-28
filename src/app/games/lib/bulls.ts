@@ -32,3 +32,13 @@ export function randomCode(length: number): string {
   }
   return digits.slice(0, length).join("");
 }
+
+/** Per-digit notes a player keeps about the opponent's number. */
+export const NOTE_STATES = ["", "no", "yes"] as const;
+export type Note = (typeof NOTE_STATES)[number];
+
+export const blankNotes = (): Note[] => Array(10).fill("");
+
+export function nextNote(note: Note): Note {
+  return NOTE_STATES[(NOTE_STATES.indexOf(note) + 1) % NOTE_STATES.length];
+}

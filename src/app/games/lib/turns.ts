@@ -33,3 +33,26 @@ export function afterGuess(
   if (maxGuesses !== null && counts[0] >= maxGuesses) return { over: true, winner: null };
   return { over: false, turn: starter };
 }
+
+export interface Progress {
+  tries: number;
+  solved: boolean;
+}
+
+/**
+ * Outcome of a race where both players guess at their own pace and the one
+ * who needs fewer guesses wins (online play). Returns undefined while it can
+ * still go either way, null for a draw.
+ */
+export function raceResult(progress: [Progress, Progress], maxGuesses: number | null): Seat | null | undefined {
+  const [a, b] = progress;
+  if (a.solved && b.solved) return a.tries === b.tries ? null : a.tries < b.tries ? 0 : 1;
+  for (const seat of [0, 1] as const) {
+    const mine = progress[seat];
+    const theirs = progress[other(seat)];
+    // At best the other player finds it on their next guess — already too late.
+    if (mine.solved && !theirs.solved && theirs.tries >= mine.tries) return seat;
+  }
+  const out = (p: Progress) => maxGuesses !== null && p.tries >= maxGuesses;
+  return out(a) && out(b) ? null : undefined;
+}

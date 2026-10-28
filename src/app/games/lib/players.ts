@@ -1,12 +1,7 @@
+import { DEFAULT_NAMES, cleanName } from "./names";
 import { persisted } from "./persist";
 
-export const NAME_MAX = 16;
-export const DEFAULT_NAMES: [string, string] = ["Игрок 1", "Игрок 2"];
-
-export function cleanName(name: unknown, fallback: string): string {
-  const s = typeof name === "string" ? name.replace(/\s+/g, " ").trim().slice(0, NAME_MAX) : "";
-  return s || fallback;
-}
+export { DEFAULT_NAMES, NAME_MAX, cleanName } from "./names";
 
 /** The last names typed in, so every game starts with them filled in. */
 export const playerNames = persisted<[string, string]>("games:players", DEFAULT_NAMES, (raw) =>

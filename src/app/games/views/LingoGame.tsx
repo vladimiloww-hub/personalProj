@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Board from "../components/Board";
 import Keyboard from "../components/Keyboard";
+import { MyName, OnlineError, WhereToPlay, useOnlineStart, type Where } from "../components/OnlineStart";
+import { WordTiles } from "../components/panels";
 import {
   Button,
   GameScreen,
@@ -19,6 +21,7 @@ import {
   useToast,
 } from "../components/ui";
 import { isSolved, keyStates, makeGuess } from "../lib/evaluate";
+import { LINGO_ROUNDS, lingoGuess, lingoStart, type LingoRound, type LingoRounds } from "../lib/lingo";
 import { BACK, ENTER, keyFromEvent } from "../lib/keys";
 import { persisted } from "../lib/persist";
 import { DEFAULT_NAMES, cleanName, playerNames } from "../lib/players";
@@ -28,24 +31,14 @@ import { useKeys } from "../lib/useKeys";
 import { LANGS, MAX_GUESSES, WORD_LENGTH, isLang, loadDict, randomAnswer, type Lang } from "../lib/words";
 
 const PHASES = ["setup", "play", "round", "over"] as const;
-const ROUNDS = [3, 5, 7] as const;
 
-interface LingoState {
+interface LingoState extends LingoRound {
   phase: (typeof PHASES)[number];
   lang: Lang;
   names: [string, string];
-  rounds: (typeof ROUNDS)[number];
+  rounds: LingoRounds;
   /** Lingo rule: the first letter is given and every guess starts with it. */
   firstLetter: boolean;
-  round: number;
-  answer: string;
-  guesses: { word: string; by: Seat }[];
-  starter: Seat;
-  turn: Seat;
-  score: [number, number];
-  roundWinner: Seat | null;
-  /** Answers already played this match, so none comes up twice. */
-  used: string[];
 }
 
 const FRESH: LingoState = {
@@ -70,7 +63,7 @@ const store = persisted<LingoState>("games:lingo", FRESH, (raw) => {
     !isOneOf(raw.phase, PHASES) ||
     !isLang(raw.lang) ||
     !isPair(raw.names, isString) ||
-    !isOneOf(raw.rounds, ROUNDS) ||
+    !isOneOf(raw.rounds, LINGO_ROUNDS) ||
     typeof raw.firstLetter !== "boolean" ||
     !isCount(raw.round) ||
     !isString(raw.answer) ||
@@ -88,23 +81,6 @@ const store = persisted<LingoState>("games:lingo", FRESH, (raw) => {
 });
 
 const REVEAL_MS = 5 * 180 + 500;
-
-function withGuess(s: LingoState, word: string): LingoState {
-  const guesses = [...s.guesses, { word, by: s.turn }];
-  const solved = word === s.answer;
-  if (!solved && guesses.length < MAX_GUESSES) return { ...s, guesses, turn: other(s.turn) };
-  const score: [number, number] = [...s.score];
-  if (solved) score[s.turn]++;
-  // Stop early once the trailing player can't catch up any more.
-  const decided = Math.abs(score[0] - score[1]) > s.rounds - s.round;
-  return {
-    ...s,
-    guesses,
-    score,
-    roundWinner: solved ? s.turn : null,
-    phase: s.round >= s.rounds || decided ? "over" : "round",
-  };
-}
 
 export default function LingoGame() {
   const s = store.use();
@@ -142,23 +118,14 @@ export default function LingoGame() {
 
 async function newRound(s: LingoState, round: number, starter: Seat): Promise<LingoState> {
   const dict = await loadDict(s.lang);
-  const answer = randomAnswer(dict, s.used);
-  return {
-    ...s,
-    phase: "play",
-    round,
-    answer,
-    starter,
-    turn: starter,
-    guesses: [],
-    roundWinner: null,
-    used: [...s.used, answer].slice(-200),
-  };
+  return lingoStart(s, randomAnswer(dict, s.used), round, starter);
 }
 
 function Setup({ state: s }: { state: LingoState }) {
   const names = playerNames.use();
   const [busy, setBusy] = useState(false);
+  const [where, setWhere] = useState<Where>("local");
+  const online = useOnlineStart("lingo");
 
   const start = async () => {
     const clean: [string, string] = [cleanName(names[0], DEFAULT_NAMES[0]), cleanName(names[1], DEFAULT_NAMES[1])];
@@ -179,7 +146,8 @@ function Setup({ state: s }: { state: LingoState }) {
           Ходите по очереди на общей доске. Подсказки достаются обоим — кто первым догадается, забирает раунд.
         </p>
       </div>
-      <NameFields names={names} onChange={playerNames.set} />
+      <WhereToPlay value={where} onChange={setWhere} />
+      {where === "local" ? <NameFields names={names} onChange={playerNames.set} /> : <MyName />}
       <Segmented
         label="Язык слов"
         value={s.lang}
@@ -189,7 +157,7 @@ function Setup({ state: s }: { state: LingoState }) {
       <Segmented
         label="Раундов"
         value={s.rounds}
-        options={ROUNDS.map((n) => ({ value: n, label: String(n) }))}
+        options={LINGO_ROUNDS.map((n) => ({ value: n, label: String(n) }))}
         onChange={(rounds) => store.set((prev) => ({ ...prev, rounds }))}
       />
       <Segmented
@@ -201,9 +169,19 @@ function Setup({ state: s }: { state: LingoState }) {
         ]}
         onChange={(v) => store.set((prev) => ({ ...prev, firstLetter: v === "open" }))}
       />
-      <Button onClick={start} disabled={busy}>
-        Начать
-      </Button>
+      {where === "local" ? (
+        <Button onClick={start} disabled={busy}>
+          Начать
+        </Button>
+      ) : (
+        <Button
+          onClick={() => online.start({ lang: s.lang, rounds: s.rounds, firstLetter: s.firstLetter })}
+          disabled={online.busy}
+        >
+          Создать комнату
+        </Button>
+      )}
+      <OnlineError error={online.error} />
     </Page>
   );
 }
@@ -245,7 +223,7 @@ function Play({ state: s }: { state: LingoState }) {
       const seat = s.turn;
       setRevealRow(s.guesses.length);
       setTyped("");
-      store.set((prev) => withGuess(prev, current));
+      store.set((prev) => lingoGuess(prev, current));
       timer.current = setTimeout(() => {
         setRevealRow(null);
         const next = store.get();
@@ -355,16 +333,7 @@ function RoundResult({ state: s, onNext }: { state: LingoState; onNext: () => vo
       ) : (
         <p className="mt-1 font-wg-display text-2xl font-extrabold">Никто не угадал</p>
       )}
-      <div className="mx-auto mt-4 flex max-w-[260px] justify-center gap-1.5" aria-label={`Слово: ${s.answer}`}>
-        {Array.from(s.answer).map((ch, i) => (
-          <span
-            key={i}
-            className="grid aspect-square flex-1 place-items-center rounded-md bg-wg-correct font-extrabold uppercase text-white"
-          >
-            {ch}
-          </span>
-        ))}
-      </div>
+      <WordTiles word={s.answer} />
       <div className="mt-5 flex items-center justify-center gap-4">
         {([0, 1] as const).map((seat) => (
           <div key={seat} className={`wg-p${seat} min-w-0 flex-1 rounded-xl bg-wg-surface-2 p-3`}>

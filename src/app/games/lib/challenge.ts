@@ -1,4 +1,4 @@
-import { cleanName } from "./players";
+import { cleanName } from "./names";
 import { MAX_GUESSES, isLang, isWordShape, normalizeWord, type Lang } from "./words";
 
 /**

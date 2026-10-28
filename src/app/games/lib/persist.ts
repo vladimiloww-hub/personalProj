@@ -73,6 +73,4 @@ export function persisted<T>(key: string, fallback: T, sanitize: (raw: unknown) 
   };
 }
 
-export function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
+export { isRecord } from "./sanitize";

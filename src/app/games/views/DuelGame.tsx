@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import Board from "../components/Board";
 import Keyboard from "../components/Keyboard";
+import { MyName, OnlineError, WhereToPlay, useOnlineStart, type Where } from "../components/OnlineStart";
 import SecretEntry from "../components/SecretEntry";
+import { BoardPanel, SecretsGrid, Verdict } from "../components/panels";
 import { ArrowRightIcon } from "../components/icons";
 import {
   Button,
@@ -162,6 +164,8 @@ export default function DuelGame() {
 function Setup({ state: s }: { state: DuelState }) {
   const names = playerNames.use();
   const [busy, setBusy] = useState(false);
+  const [where, setWhere] = useState<Where>("local");
+  const online = useOnlineStart("duel");
 
   const start = async () => {
     const clean: [string, string] = [cleanName(names[0], DEFAULT_NAMES[0]), cleanName(names[1], DEFAULT_NAMES[1])];
@@ -186,11 +190,12 @@ function Setup({ state: s }: { state: DuelState }) {
       <div>
         <h2 className="font-wg-display text-2xl font-extrabold">Кто быстрее найдёт слово?</h2>
         <p className="mt-2 text-[15px] leading-relaxed text-wg-muted">
-          У каждого своя доска и своё слово. Ходите по очереди на одном телефоне — побеждает тот, кому понадобится
-          меньше попыток.
+          У каждого своя доска и своё слово. Побеждает тот, кому понадобится меньше попыток — на одном телефоне по
+          очереди или онлайн, каждый со своего.
         </p>
       </div>
-      <NameFields names={names} onChange={playerNames.set} />
+      <WhereToPlay value={where} onChange={setWhere} />
+      {where === "local" ? <NameFields names={names} onChange={playerNames.set} /> : <MyName />}
       <Segmented
         label="Язык слов"
         value={s.lang}
@@ -206,14 +211,21 @@ function Setup({ state: s }: { state: DuelState }) {
         ]}
         onChange={(source) => store.set((prev) => ({ ...prev, source }))}
       />
-      <Button onClick={start} disabled={busy}>
-        Начать
-      </Button>
+      {where === "local" ? (
+        <Button onClick={start} disabled={busy}>
+          Начать
+        </Button>
+      ) : (
+        <Button onClick={() => online.start({ lang: s.lang, source: s.source })} disabled={online.busy}>
+          Создать комнату
+        </Button>
+      )}
+      <OnlineError error={online.error} />
       <Link
         href="/games/challenge"
         className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-wg-line px-4 py-3 text-sm text-wg-muted transition hover:text-wg-text"
       >
-        Друг далеко? Отправь вызов по ссылке
+        Не одновременно? Отправь вызов по ссылке
         <ArrowRightIcon />
       </Link>
     </Page>
@@ -305,36 +317,29 @@ function Play({ state: s }: { state: DuelState }) {
         {([0, 1] as const).map((seat) => {
           const active = !finished && seat === focus;
           return (
-            <section
+            <BoardPanel
               key={seat}
-              className={`wg-p${seat} flex min-w-0 flex-1 transition-opacity duration-300 ${
-                finished || active ? "" : "opacity-50"
-              }`}
-              aria-label={`Доска: ${s.names[seat]}`}
+              seat={seat}
+              name={s.names[seat]}
+              dim={!finished && !active}
+              badge={active && !over && <span className="wg-turn">ходит</span>}
+              footer={
+                finished && (
+                  <>
+                    Слово: <b className="uppercase tracking-wider text-wg-text">{s.secrets[seat]}</b>
+                  </>
+                )
+              }
             >
-              <div className="wg-fit">
-                <div className="flex flex-col gap-2" style={{ "--reserve": finished ? "56px" : "28px" } as CSSProperties}>
-                  <div className="flex w-0 min-w-full items-center gap-1.5 text-[13px] leading-5">
-                    <span className="size-2 shrink-0 rounded-full bg-wg-pc" aria-hidden />
-                    <b className="min-w-0 truncate">{s.names[seat]}</b>
-                    {active && !over && <span className="wg-turn ml-auto shrink-0 font-bold text-wg-pc">ходит</span>}
-                  </div>
-                  <Board
-                    guesses={boards[seat]}
-                    active={active && !over}
-                    current={current}
-                    revealRow={reveal?.seat === seat ? reveal.row : undefined}
-                    shake={active ? shake : 0}
-                    label={`Попытки: ${s.names[seat]}`}
-                  />
-                  {finished && (
-                    <p className="w-0 min-w-full truncate text-center text-[13px] leading-5 text-wg-muted">
-                      Слово: <b className="uppercase tracking-wider text-wg-text">{s.secrets[seat]}</b>
-                    </p>
-                  )}
-                </div>
-              </div>
-            </section>
+              <Board
+                guesses={boards[seat]}
+                active={active && !over}
+                current={current}
+                revealRow={reveal?.seat === seat ? reveal.row : undefined}
+                shake={active ? shake : 0}
+                label={`Попытки: ${s.names[seat]}`}
+              />
+            </BoardPanel>
           );
         })}
       </div>
@@ -366,31 +371,12 @@ function Result({ state: s, onRematch }: { state: DuelState; onRematch: () => vo
   const bothSolved = s.winner === null && s.guesses[0].at(-1) === s.secrets[0];
   return (
     <div className="text-center">
-      {s.winner !== null ? (
-        <div className={`wg-p${s.winner}`}>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-wg-muted">Победа</p>
-          <p className="mt-1 font-wg-display text-3xl font-extrabold text-wg-pc">{s.names[s.winner]}</p>
-          <p className="mt-2 text-wg-muted">
-            Слово найдено за {moves} {plural(moves, MOVES)}
-          </p>
-        </div>
-      ) : (
-        <div>
-          <p className="font-wg-display text-3xl font-extrabold">Ничья</p>
-          <p className="mt-2 text-wg-muted">
-            {bothSolved ? `Оба слова найдены за ${moves} ${plural(moves, MOVES)}` : "Ни одно слово не найдено"}
-          </p>
-        </div>
-      )}
-      <p className="mt-5 text-[13px] font-semibold text-wg-muted">Какие слова искали</p>
-      <div className="mt-2 grid grid-cols-2 gap-2 text-left">
-        {([0, 1] as const).map((seat) => (
-          <div key={seat} className={`wg-p${seat} rounded-xl bg-wg-surface-2 p-3`}>
-            <p className="truncate text-[13px] font-semibold text-wg-pc">{s.names[seat]}</p>
-            <p className="mt-0.5 font-wg-display text-lg font-extrabold uppercase tracking-wider">{s.secrets[seat]}</p>
-          </div>
-        ))}
-      </div>
+      <Verdict winner={s.winner} names={s.names}>
+        {s.winner !== null || bothSolved
+          ? `${bothSolved ? "Оба слова найдены" : "Слово найдено"} за ${moves} ${plural(moves, MOVES)}`
+          : "Ни одно слово не найдено"}
+      </Verdict>
+      <SecretsGrid caption="Какие слова искали" names={s.names} secrets={s.secrets} />
       <p className="mt-4 font-wg-display text-lg font-extrabold tabular-nums">
         {s.score[0]} : {s.score[1]}
       </p>

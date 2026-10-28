@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Board from "../components/Board";
 import DigitPad from "../components/DigitPad";
+import { MyName, OnlineError, WhereToPlay, useOnlineStart, type Where } from "../components/OnlineStart";
 import SecretEntry from "../components/SecretEntry";
+import { BullsColumn, Notes, SecretsGrid, Verdict } from "../components/panels";
 import {
   Button,
   GameScreen,
@@ -19,7 +21,17 @@ import {
   TopBar,
   useToast,
 } from "../components/ui";
-import { BULLS_LENGTHS, isValidCode, randomCode, scoreBulls, type BullsLength } from "../lib/bulls";
+import {
+  BULLS_LENGTHS,
+  NOTE_STATES,
+  blankNotes,
+  isValidCode,
+  nextNote,
+  randomCode,
+  scoreBulls,
+  type BullsLength,
+  type Note,
+} from "../lib/bulls";
 import { BACK, ENTER, digitFromEvent } from "../lib/keys";
 import { persisted } from "../lib/persist";
 import { DEFAULT_NAMES, cleanName, playerNames } from "../lib/players";
@@ -30,10 +42,6 @@ import { useKeys } from "../lib/useKeys";
 
 const PHASES = ["setup", "secret", "handoff", "play", "over"] as const;
 const SOURCES = ["custom", "random"] as const;
-
-/** Per-digit notes a player keeps about the opponent's number. */
-const NOTE_STATES = ["", "no", "yes"] as const;
-type Note = (typeof NOTE_STATES)[number];
 
 interface BullsState {
   phase: (typeof PHASES)[number];
@@ -51,7 +59,7 @@ interface BullsState {
   notes: [Note[], Note[]];
 }
 
-const blankNotes = (): [Note[], Note[]] => [Array(10).fill(""), Array(10).fill("")];
+const blankPair = (): [Note[], Note[]] => [blankNotes(), blankNotes()];
 
 const FRESH: BullsState = {
   phase: "setup",
@@ -65,7 +73,7 @@ const FRESH: BullsState = {
   setter: 0,
   score: [0, 0],
   winner: null,
-  notes: blankNotes(),
+  notes: blankPair(),
 };
 
 const isNotes = (v: unknown): v is Note[] =>
@@ -104,7 +112,7 @@ function withGuess(s: BullsState, code: string): BullsState {
 }
 
 function freshRound(s: BullsState, starter: Seat): BullsState {
-  const base = { ...s, starter, turn: starter, guesses: [[], []] as [string[], string[]], winner: null, notes: blankNotes() };
+  const base = { ...s, starter, turn: starter, guesses: [[], []] as [string[], string[]], winner: null, notes: blankPair() };
   return s.source === "custom"
     ? { ...base, phase: "secret", secrets: ["", ""], setter: starter }
     : { ...base, phase: "play", secrets: [randomCode(s.length), randomCode(s.length)] };
@@ -172,6 +180,8 @@ export default function BullsGame() {
 
 function Setup({ state: s }: { state: BullsState }) {
   const names = playerNames.use();
+  const [where, setWhere] = useState<Where>("local");
+  const online = useOnlineStart("bulls");
 
   const start = () => {
     const clean: [string, string] = [cleanName(names[0], DEFAULT_NAMES[0]), cleanName(names[1], DEFAULT_NAMES[1])];
@@ -188,7 +198,8 @@ function Setup({ state: s }: { state: BullsState }) {
           подумать.
         </p>
       </div>
-      <NameFields names={names} onChange={playerNames.set} />
+      <WhereToPlay value={where} onChange={setWhere} />
+      {where === "local" ? <NameFields names={names} onChange={playerNames.set} /> : <MyName />}
       <Segmented
         label="Сколько цифр"
         value={s.length}
@@ -204,7 +215,14 @@ function Setup({ state: s }: { state: BullsState }) {
         ]}
         onChange={(source) => store.set((prev) => ({ ...prev, source }))}
       />
-      <Button onClick={start}>Начать</Button>
+      {where === "local" ? (
+        <Button onClick={start}>Начать</Button>
+      ) : (
+        <Button onClick={() => online.start({ length: s.length, source: s.source })} disabled={online.busy}>
+          Создать комнату
+        </Button>
+      )}
+      <OnlineError error={online.error} />
     </Page>
   );
 }
@@ -214,14 +232,8 @@ function Play({ state: s }: { state: BullsState }) {
   const [shake, setShake] = useState(0);
   const [resultClosed, setResultClosed] = useState(false);
   const [toast, showToast] = useToast();
-  const lists = useRef<(HTMLOListElement | null)[]>([]);
 
   const over = s.phase === "over";
-  const counts = `${s.guesses[0].length}-${s.guesses[1].length}`;
-
-  useEffect(() => {
-    lists.current.forEach((el) => el?.scrollTo({ top: el.scrollHeight, behavior: "smooth" }));
-  }, [counts]);
 
   const reject = (message: string) => {
     showToast(message);
@@ -253,7 +265,7 @@ function Play({ state: s }: { state: BullsState }) {
     store.set((prev) => {
       const notes: [Note[], Note[]] = [[...prev.notes[0]], [...prev.notes[1]]];
       const mine = notes[prev.turn];
-      mine[digit] = NOTE_STATES[(NOTE_STATES.indexOf(mine[digit]) + 1) % NOTE_STATES.length];
+      mine[digit] = nextNote(mine[digit]);
       return { ...prev, notes };
     });
 
@@ -266,51 +278,22 @@ function Play({ state: s }: { state: BullsState }) {
         {([0, 1] as const).map((seat) => {
           const active = !over && seat === s.turn;
           return (
-            <section
+            <BullsColumn
               key={seat}
-              className={`wg-p${seat} flex min-w-0 flex-1 flex-col gap-2 transition-opacity duration-300 ${
-                over || active ? "" : "opacity-55"
-              }`}
-              aria-label={`Ходы: ${s.names[seat]}`}
-            >
-              <div className="flex items-center gap-1.5 px-1 text-[13px]">
-                <span className="size-2 shrink-0 rounded-full bg-wg-pc" aria-hidden />
-                <b className="min-w-0 truncate">{s.names[seat]}</b>
-                {active && <span className="wg-turn ml-auto shrink-0 font-bold text-wg-pc">ходит</span>}
-              </div>
-              <ol
-                ref={(el) => {
-                  lists.current[seat] = el;
-                }}
-                className={`min-h-0 flex-1 overflow-y-auto rounded-xl border bg-wg-surface py-1 ${
-                  active ? "border-wg-pc" : "border-wg-line"
-                }`}
-              >
-                {s.guesses[seat].length === 0 && (
-                  <li className="px-3 py-3 text-center text-[13px] text-wg-muted">Пока без ходов</li>
-                )}
-                {s.guesses[seat].map((code, i) => {
-                  const { bulls, cows } = scoreBulls(code, s.secrets[seat]);
-                  return (
-                    <li key={i} className="flex items-center gap-2 px-2 py-1 sm:px-3">
-                      <span className="w-5 shrink-0 text-right text-[11px] tabular-nums text-wg-muted">{i + 1}</span>
-                      <span className="min-w-0 flex-1 font-mono text-[clamp(15px,4.4vw,20px)] font-bold tracking-[0.12em]">
-                        {code}
-                      </span>
-                      <span className="flex shrink-0 gap-1 text-[12px] font-bold tabular-nums">
-                        <Count n={bulls} letter="Б" color="bg-wg-correct" label={plural(bulls, ["бык", "быка", "быков"])} />
-                        <Count n={cows} letter="К" color="bg-wg-present" label={plural(cows, ["корова", "коровы", "коров"])} />
-                      </span>
-                    </li>
-                  );
-                })}
-              </ol>
-              {over && (
-                <p className="text-center text-[13px] text-wg-muted">
-                  Число: <b className="font-mono tracking-wider text-wg-text">{s.secrets[seat]}</b>
-                </p>
-              )}
-            </section>
+              seat={seat}
+              name={s.names[seat]}
+              guesses={s.guesses[seat].map((code) => ({ code, ...scoreBulls(code, s.secrets[seat]) }))}
+              active={active}
+              dim={!over && !active}
+              badge={active && <span className="wg-turn">ходит</span>}
+              footer={
+                over && (
+                  <>
+                    Число: <b className="font-mono tracking-wider text-wg-text">{s.secrets[seat]}</b>
+                  </>
+                )
+              }
+            />
           );
         })}
       </div>
@@ -355,75 +338,14 @@ function Play({ state: s }: { state: BullsState }) {
   );
 }
 
-function Count({ n, letter, color, label }: { n: number; letter: string; color: string; label: string }) {
-  return (
-    <span
-      className={`rounded-md px-1.5 py-0.5 ${n > 0 ? `${color} text-white` : "bg-wg-surface-2 text-wg-muted"}`}
-      aria-label={`${n} ${label}`}
-    >
-      {n}
-      {letter}
-    </span>
-  );
-}
-
-function Notes({ notes, onToggle }: { notes: Note[]; onToggle: (digit: number) => void }) {
-  return (
-    <div className="mx-auto w-full max-w-[420px] px-1.5">
-      <p className="mb-1 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-wg-muted">Заметки</p>
-      <div className="grid grid-cols-10 gap-1">
-        {notes.map((note, d) => (
-          <button
-            key={d}
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => onToggle(d)}
-            aria-label={`Цифра ${d}: ${note === "no" ? "точно нет" : note === "yes" ? "точно есть" : "без отметки"}`}
-            className={`h-8 rounded-md border font-mono text-sm font-bold transition ${
-              note === "no"
-                ? "border-transparent bg-wg-surface-2 text-wg-muted line-through opacity-60"
-                : note === "yes"
-                  ? "border-wg-correct bg-wg-correct text-white"
-                  : "border-wg-line bg-wg-surface text-wg-text"
-            }`}
-          >
-            {d}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function Result({ state: s }: { state: BullsState }) {
   const moves = s.guesses[0].length;
   return (
     <div className="text-center">
-      {s.winner !== null ? (
-        <div className={`wg-p${s.winner}`}>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-wg-muted">Победа</p>
-          <p className="mt-1 font-wg-display text-3xl font-extrabold text-wg-pc">{s.names[s.winner]}</p>
-          <p className="mt-2 text-wg-muted">
-            Число отгадано за {moves} {plural(moves, MOVES)}
-          </p>
-        </div>
-      ) : (
-        <div>
-          <p className="font-wg-display text-3xl font-extrabold">Ничья</p>
-          <p className="mt-2 text-wg-muted">
-            Оба числа отгаданы за {moves} {plural(moves, MOVES)}
-          </p>
-        </div>
-      )}
-      <p className="mt-5 text-[13px] font-semibold text-wg-muted">Какие числа искали</p>
-      <div className="mt-2 grid grid-cols-2 gap-2 text-left">
-        {([0, 1] as const).map((seat) => (
-          <div key={seat} className={`wg-p${seat} rounded-xl bg-wg-surface-2 p-3`}>
-            <p className="truncate text-[13px] font-semibold text-wg-pc">{s.names[seat]}</p>
-            <p className="mt-0.5 font-mono text-xl font-extrabold tracking-widest">{s.secrets[seat]}</p>
-          </div>
-        ))}
-      </div>
+      <Verdict winner={s.winner} names={s.names}>
+        {s.winner !== null ? "Число отгадано" : "Оба числа отгаданы"} за {moves} {plural(moves, MOVES)}
+      </Verdict>
+      <SecretsGrid caption="Какие числа искали" names={s.names} secrets={s.secrets} mono />
       <p className="mt-4 font-wg-display text-lg font-extrabold tabular-nums">
         {s.score[0]} : {s.score[1]}
       </p>

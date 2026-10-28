@@ -1,7 +1,10 @@
-import { isRecord } from "./persist";
 import type { Seat } from "./turns";
 
-/** Small guards for reading saved games back from localStorage. */
+/** Small guards for data read back from localStorage or sent to the API. */
+
+export function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
 
 export const isSeat = (v: unknown): v is Seat => v === 0 || v === 1;
 
@@ -15,5 +18,3 @@ export function isPair<T>(v: unknown, item: (x: unknown) => x is T): v is [T, T]
 export const isString = (v: unknown): v is string => typeof v === "string";
 export const isCount = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 0;
 export const isStrings = (v: unknown): v is string[] => Array.isArray(v) && v.every(isString);
-
-export { isRecord };
