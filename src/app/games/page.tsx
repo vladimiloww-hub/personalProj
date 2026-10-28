@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { Mark } from "./lib/evaluate";
 import { ArrowRightIcon } from "./components/icons";
+import JoinByCode from "./components/JoinByCode";
 
 export const metadata: Metadata = {
   title: { absolute: "Игры для двоих — словесные дуэли" },
@@ -39,7 +40,7 @@ const GAMES = [
     href: "/games/duel",
     title: "Вордл-дуэль",
     text: "Загадайте друг другу по слову и ищите их наперегонки. Кто угадает за меньшее число попыток — тот и победил.",
-    tags: ["один телефон", "слова"],
+    tags: ["один телефон", "онлайн", "слова"],
     preview: (
       <div className="space-y-1">
         <div className="wg-p0 flex items-center gap-2">
@@ -57,7 +58,7 @@ const GAMES = [
     href: "/games/lingo",
     title: "Общая доска",
     text: "Одно слово, одна доска, ходы по очереди. Чужие подсказки помогают и тебе — кто первым назовёт слово, забирает раунд.",
-    tags: ["один телефон", "раунды"],
+    tags: ["один телефон", "онлайн", "раунды"],
     preview: (
       <div className="space-y-1">
         <div className="wg-p0 flex items-center gap-2">
@@ -75,7 +76,7 @@ const GAMES = [
     href: "/games/challenge",
     title: "Вызов по ссылке",
     text: "Загадай слово и отправь ссылку. Друг угадывает у себя, а потом загадывает слово тебе — и видно, кто быстрее.",
-    tags: ["на расстоянии", "без регистрации"],
+    tags: ["когда удобно", "без регистрации"],
     preview: (
       <div className="flex items-center gap-2">
         <Tiles word="ветер" marks={[null, null, null, null, null]} />
@@ -89,7 +90,7 @@ const GAMES = [
     href: "/games/bulls",
     title: "Быки и коровы",
     text: "Классика, из которой вырос Вордл: загадайте числа из разных цифр. Подсказки — только «быки» и «коровы».",
-    tags: ["один телефон", "цифры"],
+    tags: ["один телефон", "онлайн", "цифры"],
     preview: (
       <div className="flex items-center gap-2 font-mono">
         <span className="text-lg font-bold tracking-[0.15em]">4271</span>
@@ -107,11 +108,15 @@ export default function GamesHub() {
         <Tiles word="двое" marks={["correct", "present", "correct", "absent"]} size="lg" />
         <h1 className="mt-5 font-wg-display text-[clamp(28px,7vw,44px)] font-extrabold leading-tight">Игры для двоих</h1>
         <p className="mt-3 max-w-md text-[15px] leading-relaxed text-wg-muted">
-          Вордл и его родня — играйте вдвоём на одном телефоне или вызовите друга по ссылке.
+          Вордл и его родня — играйте вдвоём на одном телефоне, онлайн с разных устройств или вызовом по ссылке.
         </p>
       </header>
 
-      <section className="mt-10 grid gap-3 sm:grid-cols-2">
+      <div className="mx-auto mt-8 max-w-sm">
+        <JoinByCode />
+      </div>
+
+      <section className="mt-8 grid gap-3 sm:grid-cols-2">
         {GAMES.map((g) => (
           <Link
             key={g.href}
@@ -139,19 +144,26 @@ export default function GamesHub() {
         ))}
       </section>
 
-      <section className="mt-12 grid gap-6 sm:grid-cols-2">
+      <section className="mt-12 grid gap-6 sm:grid-cols-3">
         <div>
           <h2 className="font-wg-display text-base font-extrabold">Рядом, на одном телефоне</h2>
           <p className="mt-2 text-[14px] leading-relaxed text-wg-muted">
-            Ходите по очереди и передавайте телефон. Секретные слова вводятся скрытыми, а перед вводом второго слова
-            игра попросит передать устройство — подглядеть не выйдет. Партия сохраняется, даже если закрыть вкладку.
+            Ходите по очереди и передавайте телефон. Секретные слова вводятся скрытыми, а перед вводом второго слова игра
+            попросит передать устройство. Партия сохраняется, даже если закрыть вкладку.
           </p>
         </div>
         <div>
-          <h2 className="font-wg-display text-base font-extrabold">На расстоянии, по ссылке</h2>
+          <h2 className="font-wg-display text-base font-extrabold">Онлайн, с разных устройств</h2>
           <p className="mt-2 text-[14px] leading-relaxed text-wg-muted">
-            Слово прячется прямо в ссылке — без регистрации и серверов. Друг угадывает у себя и отвечает своим словом, а
-            к ответу прикладывается его результат: видно, кому нужно меньше попыток.
+            Выбери «Онлайн» в настройках игры — появится код комнаты и QR. Второй игрок открывает ссылку или вводит код,
+            и ходы появляются у обоих сразу. Загаданные слова видит только сервер.
+          </p>
+        </div>
+        <div>
+          <h2 className="font-wg-display text-base font-extrabold">Когда удобно, по ссылке</h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-wg-muted">
+            Слово прячется прямо в ссылке. Друг угадывает, когда сможет, и отвечает своим словом с приложенным
+            результатом — видно, кому нужно меньше попыток.
           </p>
         </div>
       </section>

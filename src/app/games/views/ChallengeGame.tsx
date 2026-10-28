@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Board from "../components/Board";
 import Keyboard from "../components/Keyboard";
+import { WordTiles } from "../components/panels";
 import SecretEntry from "../components/SecretEntry";
 import { ShareIcon } from "../components/icons";
 import {
@@ -389,16 +390,7 @@ function ChallengeResult({
       <p className="mt-1 text-wg-muted">
         {solved ? `За ${tries} ${plural(tries, TRIES)}` : `За ${MAX_GUESSES} попыток слово не нашлось`}
       </p>
-      <div className="mx-auto mt-4 flex max-w-[260px] justify-center gap-1.5" aria-label={`Слово: ${c.word}`}>
-        {Array.from(c.word).map((ch, i) => (
-          <span
-            key={i}
-            className="grid aspect-square flex-1 place-items-center rounded-md bg-wg-correct font-extrabold uppercase text-white"
-          >
-            {ch}
-          </span>
-        ))}
-      </div>
+      <WordTiles word={c.word} />
       {verdict && c.prev !== undefined && (
         <div className="mt-5 rounded-xl bg-wg-surface-2 p-3">
           <div className="grid grid-cols-2 gap-2">
