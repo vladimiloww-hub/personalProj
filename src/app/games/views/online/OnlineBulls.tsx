@@ -4,7 +4,7 @@ import { useState } from "react";
 import Board from "../../components/Board";
 import DigitPad from "../../components/DigitPad";
 import SecretEntry from "../../components/SecretEntry";
-import { BullsColumn, Notes, SecretsGrid, Verdict } from "../../components/panels";
+import { BullsColumn, HiddenSecret, Notes, SecretsGrid, Verdict } from "../../components/panels";
 import { Button, PlayArea, ScoreBar, Sheet, StatusLine, useToast } from "../../components/ui";
 import { blankNotes, isValidCode, nextNote, type Note } from "../../lib/bulls";
 import { BACK, ENTER, digitFromEvent } from "../../lib/keys";
@@ -76,7 +76,7 @@ export default function OnlineBulls({ room, view }: GameProps<"bulls">) {
     return s.ready[opp] ? (
       <Waiting title="Число загадано">
         <p>
-          <b className="font-mono tracking-wider text-wg-text">{s.secrets[opp]}</b> — его будет отгадывать {names[opp]}.
+          <HiddenSecret value={s.secrets[opp] ?? ""} mono /> — его будет отгадывать {names[opp]}.
         </p>
         <p className="mt-1">Ждём, пока {names[opp]} загадает число для тебя…</p>
       </Waiting>
@@ -124,7 +124,12 @@ export default function OnlineBulls({ room, view }: GameProps<"bulls">) {
             footer={
               s.secrets[seat] && (
                 <>
-                  Число: <b className="font-mono tracking-wider text-wg-text">{s.secrets[seat]}</b>
+                  Число:{" "}
+                  {over ? (
+                    <b className="font-mono tracking-wider text-wg-text">{s.secrets[seat]}</b>
+                  ) : (
+                    <HiddenSecret value={s.secrets[seat]!} mono />
+                  )}
                 </>
               )
             }
