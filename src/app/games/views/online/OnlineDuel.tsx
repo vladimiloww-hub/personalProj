@@ -4,7 +4,7 @@ import { useState } from "react";
 import Board from "../../components/Board";
 import Keyboard from "../../components/Keyboard";
 import SecretEntry from "../../components/SecretEntry";
-import { BoardPanel, SecretsGrid, Verdict } from "../../components/panels";
+import { BoardPanel, HiddenSecret, SecretsGrid, Verdict } from "../../components/panels";
 import { Button, PlayArea, ScoreBar, Sheet, StatusLine, useToast } from "../../components/ui";
 import { isSolved, keyStates } from "../../lib/evaluate";
 import { BACK, ENTER, keyFromEvent } from "../../lib/keys";
@@ -64,7 +64,7 @@ export default function OnlineDuel({ room, view }: GameProps<"duel">) {
     return s.ready[opp] ? (
       <Waiting title="Слово загадано">
         <p>
-          <b className="uppercase tracking-wider text-wg-text">{s.secrets[opp]}</b> — его будет искать {names[opp]}.
+          <HiddenSecret value={s.secrets[opp] ?? ""} /> — его будет искать {names[opp]}.
         </p>
         <p className="mt-1">Ждём, пока {names[opp]} загадает слово для тебя…</p>
       </Waiting>
@@ -119,7 +119,12 @@ export default function OnlineDuel({ room, view }: GameProps<"duel">) {
               footer={
                 s.secrets[seat] && (
                   <>
-                    Слово: <b className="uppercase tracking-wider text-wg-text">{s.secrets[seat]}</b>
+                    Слово:{" "}
+                    {over ? (
+                      <b className="uppercase tracking-wider text-wg-text">{s.secrets[seat]}</b>
+                    ) : (
+                      <HiddenSecret value={s.secrets[seat]!} />
+                    )}
                   </>
                 )
               }

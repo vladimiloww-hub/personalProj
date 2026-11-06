@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { BullsGuess, Note } from "../lib/bulls";
 import { plural } from "../lib/plural";
 import type { Seat } from "../lib/turns";
+import { EyeIcon } from "./icons";
 
 /** Pieces shared by the games on one phone and online. */
 
@@ -45,6 +46,26 @@ export function BoardPanel({
         </div>
       </div>
     </section>
+  );
+}
+
+/** A secret shown as dots until tapped, so it isn't on screen for anyone glancing over. */
+export function HiddenSecret({ value, mono }: { value: string; mono?: boolean }) {
+  const [shown, setShown] = useState(false);
+  return (
+    <button
+      type="button"
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={() => setShown((s) => !s)}
+      aria-pressed={shown}
+      className="inline-flex items-center gap-1 rounded-md px-1 align-middle font-bold text-wg-text transition hover:bg-wg-surface-2"
+    >
+      <span className={mono ? "font-mono tracking-wider" : "uppercase tracking-wider"}>
+        {shown ? value : "•".repeat(value.length)}
+      </span>
+      <EyeIcon off={shown} size={16} />
+      <span className="sr-only">{shown ? "Скрыть" : "Показать"}</span>
+    </button>
   );
 }
 
