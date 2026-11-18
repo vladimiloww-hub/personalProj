@@ -11,7 +11,7 @@ import {
   replay,
   type ConnPuzzle,
 } from '@/app/games/lib/connections'
-import { latestDate, puzzleFor } from '@/lib/games/connections'
+import { builtinFor, latestDate } from '@/lib/games/connections'
 import { PUZZLES } from '@/lib/games/connections/puzzles'
 
 describe('puzzle bank', () => {
@@ -45,12 +45,12 @@ describe('days', () => {
   })
 
   it('gives everyone the same layout and goes round the bank', () => {
-    const a = puzzleFor(LAUNCH_DATE)
+    const a = builtinFor(LAUNCH_DATE)
     expect(a.number).toBe(1)
     expect(a.groups.map((g) => g.level)).toEqual([0, 1, 2, 3])
     expect([...a.order].sort()).toEqual(a.groups.flatMap((g) => g.words).sort())
-    expect(puzzleFor(LAUNCH_DATE).order).toEqual(a.order)
-    const again = puzzleFor(addDays(LAUNCH_DATE, PUZZLES.length))
+    expect(builtinFor(LAUNCH_DATE).order).toEqual(a.order)
+    const again = builtinFor(addDays(LAUNCH_DATE, PUZZLES.length))
     expect(again.groups).toEqual(a.groups)
     expect(again.order).not.toEqual(a.order)
   })
@@ -62,7 +62,7 @@ describe('days', () => {
 })
 
 describe('guessing', () => {
-  const puzzle: ConnPuzzle = puzzleFor(LAUNCH_DATE)
+  const puzzle: ConnPuzzle = builtinFor(LAUNCH_DATE)
   const [masti, chess, farm, tricky] = puzzle.groups.map((g) => g.words)
 
   it('tells a hit, a near miss, a miss and a repeat apart', () => {

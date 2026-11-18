@@ -1,35 +1,49 @@
-import { LAUNCH_DATE, dayNumber, type ConnPuzzle, type Level } from '@/app/games/lib/connections'
-import { PUZZLES } from './puzzles'
+import { buildPuzzle, dayNumber, type ConnPuzzle } from '@/app/games/lib/connections'
+import { PUZZLES, type PuzzleData } from './puzzles'
+import { getConnectionsStore, type ScheduledDay } from './store'
 
-/** A small seeded generator, so every player gets the same starting layout. */
-function seeded(seed: number) {
-  let a = seed >>> 0
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0
-    let t = a
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+export { LAUNCH_DATE } from '@/app/games/lib/connections'
+
+export const toSpec = (data: PuzzleData) => ({
+  groups: data.map(([title, words]) => ({ title, words: words.split(' ') })),
+})
+
+/**
+ * The built-in puzzle for a date when no custom one is scheduled. Days given
+ * to custom puzzles don't use up built-in ones, so the bank keeps its order
+ * (only future dates can be scheduled, so past days never change).
+ */
+export function builtinFor(date: string, scheduledBefore = 0): ConnPuzzle {
+  const number = dayNumber(date)
+  const index = (number - 1 - scheduledBefore) % PUZZLES.length
+  return buildPuzzle(toSpec(PUZZLES[index]), number, date, number * 7919)
+}
+
+export function puzzleOn(date: string, schedule: ScheduledDay[]): ConnPuzzle {
+  const custom = schedule.find((d) => d.date === date)
+  if (custom) return buildPuzzle(custom.puzzle, dayNumber(date), date, dayNumber(date) * 7919)
+  return builtinFor(date, schedule.filter((d) => d.date < date).length)
+}
+
+/** The custom days, or none when the store is missing or its tables aren't set up yet. */
+export async function scheduledDays(): Promise<ScheduledDay[]> {
+  const store = getConnectionsStore()
+  if (!store) return []
+  try {
+    return await store.listDays()
+  } catch (err) {
+    // The daily puzzle must not break over a missing table: fall back to the built-in bank.
+    console.error('connections: schedule unavailable', err)
+    return []
   }
 }
 
-/** The puzzle for a date (on or after launch); the bank goes round again when it runs out. */
-export function puzzleFor(date: string): ConnPuzzle {
-  const number = dayNumber(date)
-  const data = PUZZLES[(number - 1) % PUZZLES.length]
-  const groups = data.map(([title, words], level) => ({ level: level as Level, title, words: words.split(' ') }))
-  const order = groups.flatMap((g) => g.words)
-  const random = seeded(number * 7919)
-  for (let i = order.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1))
-    ;[order[i], order[j]] = [order[j], order[i]]
-  }
-  return { number, date, groups, order }
+/** The puzzle for a date (on or after launch), custom schedule included. */
+export async function puzzleFor(date: string): Promise<ConnPuzzle> {
+  return puzzleOn(date, await scheduledDays())
 }
 
 /** The latest date anyone on Earth can have right now (UTC+14). */
 export function latestDate(now = new Date()): string {
   return new Date(now.getTime() + 14 * 3_600_000).toISOString().slice(0, 10)
 }
-
-export { LAUNCH_DATE }

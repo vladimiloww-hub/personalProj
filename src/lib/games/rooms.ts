@@ -1,7 +1,8 @@
-import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { randomBytes, randomUUID } from 'crypto'
 import { CODE_ALPHABET, CODE_LENGTH, roomTopic, type Room } from '@/app/games/lib/online/types'
 import type { Seat } from '@/app/games/lib/turns'
+import { supabaseAdmin } from './supabase'
 
 /**
  * Storage for online game rooms: a Supabase table in production, a plain
@@ -28,8 +29,7 @@ const TABLE = 'game_rooms'
 /** Rooms untouched for this long are deleted when new ones are made. */
 const KEEP_MS = 14 * 24 * 60 * 60 * 1000
 
-function supabaseStore(url: string, key: string): RoomStore {
-  const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+function supabaseStore(db: SupabaseClient): RoomStore {
   return {
     async get(code) {
       const { data, error } = await db.from(TABLE).select('data, version').eq('code', code).maybeSingle()
@@ -93,9 +93,8 @@ let cached: RoomStore | null | undefined
 /** The configured store, or null in production without Supabase. */
 export function getRoomStore(): RoomStore | null {
   if (cached !== undefined) return cached
-  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY
-  cached = url && key ? supabaseStore(url, key) : process.env.NODE_ENV === 'production' ? null : memoryStore()
+  const db = supabaseAdmin()
+  cached = db ? supabaseStore(db) : process.env.NODE_ENV === 'production' ? null : memoryStore()
   return cached
 }
 

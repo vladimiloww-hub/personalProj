@@ -78,3 +78,22 @@ trickiest, four words each. A word may *look* like it fits another group
 (that's the fun), but the full solution must be unique. `npm test` checks the
 shape (16 different words, 4×4, capital Cyrillic letters, at most 12 letters).
 
+### Your own packs: `/games/connections/admin`
+
+Log in with the site's admin password (`ADMIN_PASSWORD`, the same login as
+`/admin`). There you can:
+
+- make a pack and add puzzles one by one in a form (paste four words
+  separated by commas into one box and they spread over the boxes), or load
+  them from a `.txt` / `.json` file — the text format is four lines
+  `Group title: word, word, word, word` per puzzle, easiest group first, with
+  an empty line between puzzles (there's a template to download);
+- share a pack by its link (`/games/connections/pack/<id>`), or list it on
+  `/games/connections/packs`;
+- put a pack into the daily feed from a chosen date: its puzzles take the
+  free days from then on and stay hidden in the pack until their day. Days
+  already open anywhere in the world can't be changed.
+
+Packs live in Supabase: run `supabase/games.sql` again (it only adds what's
+missing). Until then the daily puzzle simply keeps using the built-in bank.
+

@@ -10,5 +10,5 @@ export async function GET(req: NextRequest) {
   if (process.env.NODE_ENV === 'production' && date > latestDate()) {
     return NextResponse.json({ error: 'Эта головоломка ещё не вышла' }, { status: 404 })
   }
-  return NextResponse.json(puzzleFor(date), { headers: { 'Cache-Control': 'public, max-age=600' } })
+  return NextResponse.json(await puzzleFor(date), { headers: { 'Cache-Control': 'public, max-age=600' } })
 }
