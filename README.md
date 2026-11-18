@@ -64,3 +64,17 @@ server every couple of seconds, so online play can be tried locally in two
 browser windows. In production without them the "Онлайн" option says it isn't
 set up yet.
 
+## «Связи» (`/games/connections`)
+
+A Russian take on NYT Connections: sixteen words, four hidden groups, a new
+puzzle at local midnight. Puzzles are hand-made and live in
+[`src/lib/games/connections/puzzles.ts`](src/lib/games/connections/puzzles.ts):
+day №1 is 18 November 2026, each day takes the next puzzle, and the list
+starts over when it runs out. The API serves one day at a time and refuses
+future days, so upcoming answers never reach the browser.
+
+To add puzzles, append them to that list — four groups from easiest to
+trickiest, four words each. A word may *look* like it fits another group
+(that's the fun), but the full solution must be unique. `npm test` checks the
+shape (16 different words, 4×4, capital Cyrillic letters, at most 12 letters).
+
