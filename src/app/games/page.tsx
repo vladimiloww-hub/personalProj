@@ -37,6 +37,19 @@ function Tiles({ word, marks, size = "sm" }: { word: string; marks: (Mark | null
 
 const GAMES = [
   {
+    href: "/games/connections",
+    title: "Связи",
+    text: "Каждый день новая головоломка: шестнадцать слов, четыре скрытые группы. Найди связи — и сравни результат с другом.",
+    tags: ["каждый день", "один игрок", "сравни с другом"],
+    preview: (
+      <div className="grid w-28 grid-cols-4 gap-1" aria-hidden>
+        {[0, 0, 0, 0, 1, 1, 2, 1, 1, 2, 2, 2, 3, 3, 3, 3].map((level, i) => (
+          <span key={i} className={`wg-l${level} aspect-square rounded-[4px]`} />
+        ))}
+      </div>
+    ),
+  },
+  {
     href: "/games/duel",
     title: "Вордл-дуэль",
     text: "Загадайте друг другу по слову и ищите их наперегонки. Кто угадает за меньшее число попыток — тот и победил.",
