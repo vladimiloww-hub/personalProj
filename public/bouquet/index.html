@@ -781,7 +781,7 @@ function initApp() {
     try {
       const blob = await makeGif({
         count: state.count, kinds: state.kinds, seed: state.seed, card: state.card,
-        pitch: state.pitch, startAngle: state.angle, colour: state.colour,
+        pitch: state.pitch, startAngle: state.angle, colour: state.colour, rows,
         onProgress: (i, n) => { gifBtn.textContent = "Making GIF " + Math.round(100 * i / n) + "%"; },
       });
       if (gifUrl) URL.revokeObjectURL(gifUrl);
@@ -866,7 +866,10 @@ function lzwEncode(out, pixels) {
 
 async function makeGif(o) {
   // a fixed square picture, independent of the window
-  const fs = 12, rows = 56;
+  // At least as many character rows as on screen (more rows = finer bouquet), drawn with
+  // big glyphs (~1000 px tall) so every letter stays crisp after the colour snapping below.
+  const rows = Math.max(80, Math.min(120, Math.round(o.rows || 80)));
+  const fs = Math.max(9, Math.min(16, Math.round(1000 / rows)));
   const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d");
   const font = fs + 'px "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace';
   ctx.font = font;
@@ -876,7 +879,7 @@ async function makeGif(o) {
   canvas.width = W; canvas.height = H;
   const model = buildBouquet({ count: o.count, kinds: o.kinds, seed: o.seed, card: o.card }, { rows, cols, aspect });
 
-  const FRAMES = 60, DELAY = 6;                 // 60 frames x 0.06 s = one turn every 3.6 s
+  const FRAMES = 72, DELAY = 5;                 // 72 frames x 0.05 s = one smooth turn every 3.6 s
   const out = new ByteWriter();
   out.str("GIF89a"); out.word(W); out.word(H);
   out.byte(0xF7); out.byte(0); out.byte(0);    // 256-colour global palette, background = colour 0
@@ -911,7 +914,7 @@ async function makeGif(o) {
       const rowBase = Math.min(rows - 1, Math.floor(py / fs)) * cols;
       for (let px = 0; px < W; px++, p++) {
         const d = data[p * 4] + data[p * 4 + 1] + data[p * 4 + 2] - bgSum;
-        pixels[p] = d > 60 ? cellIdx[rowBase + colOf[px]] : 0;
+        pixels[p] = d > 45 ? cellIdx[rowBase + colOf[px]] : 0;
       }
     }
     out.byte(0x21); out.byte(0xF9); out.byte(4); out.byte(0x04); out.word(DELAY); out.byte(0); out.byte(0);  // frame timing
