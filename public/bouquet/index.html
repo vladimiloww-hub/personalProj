@@ -123,6 +123,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     <div class="field">
       <label for="speed">Spin</label>
       <input id="speed" type="range" min="0" max="2" step="0.05" value="0.5">
+      <output id="speedOut" for="speed">12.6 s</output>
     </div>
     <div class="field">
       <label for="detail">Detail</label>
@@ -733,7 +734,11 @@ function initApp() {
   let t;
   const soon = () => { clearTimeout(t); t = setTimeout(() => { rebuild(); save(); }, 120); };
   count.addEventListener("input", () => { state.count = +count.value; countOut.value = state.count; soon(); });
-  speed.addEventListener("input", () => { state.speed = +speed.value; save(); });
+  // show how long one full turn takes at this speed (the GIF uses the same timing)
+  const turnText = v => (v < 0.01 ? "still" : (TAU / v).toFixed(1) + " s");
+  const speedOut = $("speedOut");
+  speedOut.value = turnText(state.speed);
+  speed.addEventListener("input", () => { state.speed = +speed.value; speedOut.value = turnText(state.speed); save(); });
   detail.addEventListener("input", () => { state.detail = +detail.value; soon(); });
   $("kinds").addEventListener("click", e => {
     const b = e.target.closest(".chip"); if (!b) return;
@@ -781,14 +786,14 @@ function initApp() {
     try {
       const blob = await makeGif({
         count: state.count, kinds: state.kinds, seed: state.seed, card: state.card,
-        pitch: state.pitch, startAngle: state.angle, colour: state.colour, rows,
+        pitch: state.pitch, startAngle: state.angle, colour: state.colour, rows, speed: state.speed,
         onProgress: (i, n) => { gifBtn.textContent = "Making GIF " + Math.round(100 * i / n) + "%"; },
       });
       if (gifUrl) URL.revokeObjectURL(gifUrl);
       gifUrl = URL.createObjectURL(blob);
       $("gifImg").src = gifUrl;
       $("gifDownload").href = gifUrl;
-      $("gifMeta").textContent = "One full turn · " + (blob.size / 1048576).toFixed(1) + " MB";
+      $("gifMeta").textContent = (state.speed < 0.01 ? "Still picture" : "One full turn every " + (TAU / state.speed).toFixed(1) + " s") + " · " + (blob.size / 1048576).toFixed(1) + " MB";
       sheet.hidden = false; $("gifClose").focus();
     } catch (err) {
       gifBtn.textContent = "GIF failed, try again";
@@ -879,7 +884,13 @@ async function makeGif(o) {
   canvas.width = W; canvas.height = H;
   const model = buildBouquet({ count: o.count, kinds: o.kinds, seed: o.seed, card: o.card }, { rows, cols, aspect });
 
-  const FRAMES = 72, DELAY = 5;                 // 72 frames x 0.05 s = one smooth turn every 3.6 s
+  // Match the Spin slider: one turn takes 2π / speed seconds. Each frame shows for DELAY
+  // hundredths of a second (at least 5, at most 120 frames), and the frame count is chosen
+  // so FRAMES x DELAY adds up to the turn time. Spin at 0 gives a single still frame.
+  const speed = o.speed || 0, still = speed < 0.01;
+  const seconds = still ? 0 : TAU / speed;
+  const DELAY = still ? 0 : Math.max(5, Math.ceil(seconds * 100 / 120));
+  const FRAMES = still ? 1 : Math.max(2, Math.round(seconds * 100 / DELAY));
   const out = new ByteWriter();
   out.str("GIF89a"); out.word(W); out.word(H);
   out.byte(0xF7); out.byte(0); out.byte(0);    // 256-colour global palette, background = colour 0
@@ -892,7 +903,7 @@ async function makeGif(o) {
   const bgSum = GIF_BG[0] + GIF_BG[1] + GIF_BG[2];
 
   for (let f = 0; f < FRAMES; f++) {
-    const angle = o.startAngle + TAU * f / FRAMES;
+    const angle = o.startAngle + (still ? 0 : TAU * f / FRAMES);
     rasterize(model, { cols, rows, aspect, angle, pitch: o.pitch });
     ctx.fillStyle = "rgb(" + GIF_BG + ")"; ctx.fillRect(0, 0, W, H);
     ctx.font = font; ctx.textBaseline = "top";
