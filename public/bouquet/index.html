@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>ASCII Bouquet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one full-screen stage of live ASCII, a slim florist's order slip docked at the bottom. */
+:root {
+  --ground: #0d0a11;
+  --ink: #efe6dc;
+  --muted: #9a8c9c;
+  --line: #2c2433;
+  --slip: rgba(20, 15, 25, 0.92);
+  --accent: #e8577e;
+  --accent-ink: #1a0e14;
+  --display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--ground); color: var(--ink); margin: 0; overflow: hidden; font-family: var(--mono); }
+.app { position: fixed; inset: 0; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); }
+header {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding-block: 10px 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1 { font-family: var(--display); font-style: italic; font-weight: 500; font-size: 1.6rem; margin: 0; letter-spacing: 0.01em; text-wrap: balance; }
+.hint { color: var(--muted); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+#stage { flex: 1; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center; touch-action: none; cursor: grab; overflow: hidden; }
+#stage.dragging { cursor: grabbing; }
+#art { margin: 0; font-family: var(--mono); line-height: 1; white-space: pre; color: var(--ink); user-select: none; -webkit-user-select: none; }
+#measure { position: absolute; visibility: hidden; white-space: pre; font-family: var(--mono); line-height: 1; }
+.slip {
+  background: var(--slip); border-top: 1px solid var(--line);
+  padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center;
+  font-size: 0.75rem;
+}
+.slip[hidden] { display: none !important; }
+.field { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.field label, .lbl { color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.66rem; }
+.field output { min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+input[type=range] { accent-color: var(--accent); width: 120px; }
+input[type=text] { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; width: 150px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+button {
+  font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--line);
+  padding: 5px 10px; border-radius: 999px; cursor: pointer; letter-spacing: 0.02em;
+}
+button:hover { border-color: var(--muted); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip[aria-pressed="true"] { background: var(--chip, var(--accent)); color: var(--accent-ink); border-color: transparent; font-weight: 600; }
+.actions { display: flex; gap: 6px; margin-left: auto; }
+#toggleSlip { font-size: 0.7rem; }
+#gif[disabled] { opacity: 0.7; cursor: progress; }
+/* clean view (#clean in the address): just the bouquet, nothing else */
+.app.clean header, .app.clean .slip { display: none !important; }
+.app.clean #stage { cursor: default; }
+.gif-sheet {
+  position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+  background: rgba(8, 6, 10, 0.8);
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.gif-sheet[hidden] { display: none !important; }
+.gif-card {
+  background: var(--slip); border: 1px solid var(--line); border-radius: 12px; padding: 18px;
+  display: flex; flex-direction: column; gap: 10px; max-width: min(560px, 100%); max-height: 100%; overflow: auto;
+}
+.gif-card h2 { margin: 0; font-family: var(--display); font-style: italic; font-weight: 500; font-size: 1.5rem; }
+.gif-card img { width: 100%; height: auto; border-radius: 8px; background: var(--ground); image-rendering: auto; }
+.gif-meta, .gif-hint { margin: 0; color: var(--muted); font-size: 0.72rem; }
+.gif-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-primary {
+  font: inherit; font-size: 0.8rem; font-weight: 600; text-decoration: none; color: var(--accent-ink);
+  background: var(--accent); border-radius: 999px; padding: 6px 14px;
+}
+.btn-primary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+@media (max-width: 560px) {
+  .actions { margin-left: 0; }
+  input[type=range] { width: 96px; }
+  h1 { font-size: 1.3rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>ASCII Bouquet</h1>
+    <span class="hint">drag to turn</span>
+    <button id="toggleSlip" type="button" aria-expanded="true">Hide controls</button>
+  </header>
+  <div id="stage"><pre id="art" aria-label="Animated ASCII art bouquet of flowers"></pre><span id="measure"></span></div>
+  <div class="slip" id="slip">
+    <div class="field">
+      <label for="count">Stems</label>
+      <input id="count" type="range" min="1" max="40" step="1" value="11">
+      <output id="countOut" for="count">11</output>
+    </div>
+    <div class="field">
+      <span class="lbl">Kinds</span>
+      <div class="chips" id="kinds">
+        <button type="button" class="chip" data-kind="rose" aria-pressed="true" style="--chip:#e8577e">Rose</button>
+        <button type="button" class="chip" data-kind="magnolia" aria-pressed="true" style="--chip:#f3d2e2">Magnolia</button>
+        <button type="button" class="chip" data-kind="lily" aria-pressed="true" style="--chip:#ff9a52">Lily</button>
+        <button type="button" class="chip" data-kind="orchid" aria-pressed="true" style="--chip:#df8ce0">Orchid</button>
+        <button type="button" class="chip" data-kind="breath" aria-pressed="true" style="--chip:#e9ecf5">Baby's breath</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="cardText">Card</label>
+      <input id="cardText" type="text" maxlength="40" value="Моей любимой Вики!" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="speed">Spin</label>
+      <input id="speed" type="range" min="0" max="2" step="0.05" value="0.5">
+    </div>
+    <div class="field">
+      <label for="detail">Detail</label>
+      <input id="detail" type="range" min="4" max="15" step="1" value="12">
+    </div>
+    <div class="actions">
+      <button type="button" id="pause">Pause</button>
+      <button type="button" id="shuffle">Rearrange</button>
+      <button type="button" id="colour" aria-pressed="true">Colour</button>
+      <button type="button" id="gif">Save GIF</button>
+    </div>
+  </div>
+</div>
+
+<div class="gif-sheet" id="gifSheet" hidden>
+  <div class="gif-card" role="dialog" aria-modal="true" aria-labelledby="gifTitle">
+    <h2 id="gifTitle">Your bouquet GIF</h2>
+    <img id="gifImg" alt="Animated GIF of the spinning bouquet">
+    <p class="gif-meta" id="gifMeta"></p>
+    <div class="gif-actions">
+      <a id="gifDownload" class="btn-primary" download="bouquet.gif" href="#">Download GIF</a>
+      <button type="button" id="gifClose">Close</button>
+    </div>
+    <p class="gif-hint">If Download does nothing, right-click the picture (or press and hold on a phone) and save it.</p>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- vector helpers ---------- */
+const TAU = Math.PI * 2;
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const len = a => Math.hypot(a[0], a[1], a[2]);
+const nrm = a => { const l = len(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+const lerp = (a, b, t) => a + (b - a) * t;
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const hash = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+
+/* ---------- materials ---------- */
+const MATS = [
+  [214, 28, 66],   // 0 rose red
+  [140, 10, 44],   // 1 rose red, inner
+  [252, 238, 244], // 2 magnolia
+  [222, 96, 158],  // 3 magnolia blush base
+  [255, 138, 52],  // 4 lily orange
+  [140, 26, 30],   // 5 lily spot
+  [236, 132, 228], // 6 orchid
+  [168, 36, 150],  // 7 orchid lip
+  [255, 214, 90],  // 8 yellow
+  [190, 80, 30],   // 9 anther
+  [96, 168, 80],   // 10 stem
+  [52, 138, 72],   // 11 leaf
+  [222, 178, 124], // 12 kraft paper
+  [255, 92, 140],  // 13 ribbon
+  [240, 244, 255], // 14 baby's breath
+  [238, 196, 212], // 15 tissue paper
+  [214, 236, 180], // 16 filament
+  [255, 128, 168], // 17 rose pink
+  [212, 64, 118],  // 18 rose pink, inner
+  [244, 92, 150],  // 19 lily pink (stargazer)
+  [130, 14, 64],   // 20 lily pink spot
+  [250, 246, 252], // 21 orchid white
+  [255, 236, 170], // 22 rose cream
+  [236, 186, 120], // 23 rose cream, inner
+  [255, 120, 160], // 24 card lettering
+  [250, 236, 214], // 25 card border
+  [236, 222, 200], // 26 card paper (back side)
+];
+
+/* ---------- geometry primitives ---------- */
+// Sample a parametric surface f(u,v), u,v in [0,1], at roughly ctx.step spacing.
+function patch(ctx, f, mat) {
+  let Lu = 0, Lv = 0;
+  for (let k = 0; k <= 4; k++) {
+    const t = k / 4; let a = 0, b = 0, pa = f(0, t), pb = f(t, 0);
+    for (let j = 1; j <= 8; j++) { const q = f(j / 8, t); a += len(sub(q, pa)); pa = q; const r = f(t, j / 8); b += len(sub(r, pb)); pb = r; }
+    if (a > Lu) Lu = a; if (b > Lv) Lv = b;
+  }
+  const nu = Math.min(500, Math.max(2, Math.ceil(Lu / ctx.step)));
+  const nv = Math.min(500, Math.max(2, Math.ceil(Lv / ctx.step)));
+  const h = 1e-3, mf = typeof mat === "function";
+  for (let i = 0; i <= nu; i++) {
+    const u = i / nu, u0 = Math.max(0, u - h), u1 = Math.min(1, u + h);
+    for (let j = 0; j <= nv; j++) {
+      const v = j / nv, v0 = Math.max(0, v - h), v1 = Math.min(1, v + h);
+      const p = f(u, v);
+      let n = cross(sub(f(u1, v), f(u0, v)), sub(f(u, v1), f(u, v0)));
+      if (len(n) < 1e-14) n = [0, 1, 0];
+      ctx.emit(p, nrm(n), mf ? mat(u, v) : mat);
+    }
+  }
+}
+
+// One petal / tepal / leaf, built around the local +y axis.
+function petal(ctx, o) {
+  const N = 24, rho = [o.r0 || 0], hh = [o.h0 || 0];
+  const tp = o.tp || 2;
+  const th = s => o.t0 + (o.t1 - o.t0) * Math.pow(s, tp);
+  for (let i = 1; i <= N; i++) { const t = th((i - 0.5) / N); rho[i] = rho[i - 1] + Math.sin(t) * o.L / N; hh[i] = hh[i - 1] + Math.cos(t) * o.L / N; }
+  const cphi = Math.cos(o.phi), sphi = Math.sin(o.phi);
+  const f = (s, t01) => {
+    const t = t01 * 2 - 1, x = s * N, i = Math.min(N - 1, Math.floor(x)), fr = x - i;
+    const r = rho[i] + (rho[i + 1] - rho[i]) * fr, h = hh[i] + (hh[i + 1] - hh[i]) * fr, a = th(s);
+    const w = o.W * o.shape(s), across = t * w;
+    const nx = Math.cos(a), ny = -Math.sin(a);
+    let off = -(o.cup || 0) * t * t * w;
+    if (o.wave) off += o.wave * Math.sin(t * 7 + s * 9 + o.phi * 3) * Math.abs(t) * s;
+    const rr = r + nx * off, yy = h + ny * off;
+    if (o.wrap) {
+      const ang = Math.max(-1.5, Math.min(1.5, across / (Math.abs(rr) + 0.035)));
+      const A = o.phi + ang;
+      return [Math.cos(A) * rr, yy, Math.sin(A) * rr];
+    }
+    return [cphi * rr - sphi * across, yy, sphi * rr + cphi * across];
+  };
+  patch(ctx, f, o.mat);
+}
+
+function ellipsoid(ctx, c, rx, ry, rz, mat) {
+  patch(ctx, (u, v) => {
+    const a = u * TAU, b = v * Math.PI;
+    return [c[0] + rx * Math.sin(b) * Math.cos(a), c[1] + ry * Math.cos(b), c[2] + rz * Math.sin(b) * Math.sin(a)];
+  }, mat);
+}
+
+function tube(ctx, curve, radius, mat) {
+  const f = (s, v) => {
+    const c = curve(s), e = 1e-3;
+    const T = nrm(sub(curve(Math.min(1, s + e)), curve(Math.max(0, s - e))));
+    let A = cross(T, [0, 1, 0]); if (len(A) < 0.1) A = cross(T, [1, 0, 0]); A = nrm(A);
+    const B = cross(T, A), ang = v * TAU, r = typeof radius === "function" ? radius(s) : radius;
+    return add(c, add(mul(A, Math.cos(ang) * r), mul(B, Math.sin(ang) * r)));
+  };
+  patch(ctx, f, mat);
+}
+
+const bezier = (p0, p1, p2) => s => { const a = (1 - s) * (1 - s), b = 2 * (1 - s) * s, c = s * s; return [a * p0[0] + b * p1[0] + c * p2[0], a * p0[1] + b * p1[1] + c * p2[1], a * p0[2] + b * p1[2] + c * p2[2]]; };
+
+// Map a flower built around local +y into the world: local y -> d.
+function frameCtx(model, step, origin, d, upHint, spin, scale) {
+  let r = sub(upHint, mul(d, dot(upHint, d)));
+  if (len(r) < 1e-3) r = Math.abs(d[0]) < 0.9 ? [1, 0, 0] : [0, 0, 1];
+  r = nrm(r);
+  const dr = cross(d, r);
+  r = add(mul(r, Math.cos(spin)), mul(dr, Math.sin(spin)));
+  const f = cross(r, d);
+  return {
+    step: step / scale,
+    emit(p, n, m) {
+      model.push(
+        origin[0] + (r[0] * p[0] + d[0] * p[1] + f[0] * p[2]) * scale,
+        origin[1] + (r[1] * p[0] + d[1] * p[1] + f[1] * p[2]) * scale,
+        origin[2] + (r[2] * p[0] + d[2] * p[1] + f[2] * p[2]) * scale,
+        r[0] * n[0] + d[0] * n[1] + f[0] * n[2],
+        r[1] * n[0] + d[1] * n[1] + f[1] * n[2],
+        r[2] * n[0] + d[2] * n[1] + f[2] * n[2], m);
+    }
+  };
+}
+
+/* ---------- the flowers ---------- */
+function rose(ctx, rng) {
+  const pal = [[0, 1], [17, 18], [22, 23]][Math.floor(rng() * 3)];
+  const P = 19;
+  for (let i = 0; i < P; i++) {
+    const k = i / (P - 1);
+    const t0 = 0.04 + 0.8 * Math.pow(k, 1.7);
+    petal(ctx, {
+      phi: i * 2.39996 + rng() * 0.25, L: 0.2 + 0.24 * k, W: 0.09 + 0.19 * k,
+      t0, t1: t0 + (k > 0.5 ? 1.5 * (k - 0.5) : 0.04), tp: 2.6,
+      cup: 0.22, r0: 0.008 + 0.05 * k, h0: -0.07 * k, wrap: true, wave: k > 0.5 ? 0.025 : 0,
+      shape: s => Math.pow(Math.sin(Math.PI * (0.12 + 0.8 * s)), 0.55) * (0.45 + 0.55 * Math.sqrt(s)),
+      mat: k < 0.38 ? pal[1] : pal[0],
+    });
+  }
+  for (let i = 0; i < 5; i++) petal(ctx, { phi: i * TAU / 5 + 0.3, L: 0.22, W: 0.045, t0: 1.7, t1: 2.5, r0: 0.03, h0: -0.12, cup: 0.3, shape: s => Math.sin(Math.PI * Math.min(1, 0.1 + s)), mat: 11 });
+  ellipsoid(ctx, [0, -0.13, 0], 0.06, 0.05, 0.06, 10);
+}
+
+function magnolia(ctx, rng) {
+  const layers = [[0.1, 0.22, 0.48, 0.19, 0], [0.38, 0.62, 0.55, 0.22, Math.PI / 3], [0.78, 1.25, 0.58, 0.2, 0.2]];
+  layers.forEach(([t0, t1, L, W, ph]) => {
+    for (let j = 0; j < 3; j++) petal(ctx, {
+      phi: ph + j * TAU / 3 + (rng() - 0.5) * 0.25, L: L * (0.93 + rng() * 0.12), W, t0, t1, tp: 1.6, cup: 0.6, r0: 0.03,
+      shape: s => Math.pow(Math.sin(Math.PI * (0.04 + 0.9 * s)), 0.7) * (0.5 + 0.65 * s),
+      mat: (s, t) => (s < 0.32 + 0.08 * Math.abs(t - 0.5) ? 3 : 2),
+    });
+  });
+  patch(ctx, (u, v) => { const a = u * TAU, r = 0.045 * (1 - v * 0.7); return [Math.cos(a) * r, 0.02 + v * 0.2, Math.sin(a) * r]; }, 8);
+  patch(ctx, (u, v) => { const a = u * TAU, r = 0.05 + v * 0.03; return [Math.cos(a) * r, 0.02 + v * 0.03, Math.sin(a) * r]; }, 9);
+  ellipsoid(ctx, [0, -0.04, 0], 0.07, 0.05, 0.07, 10);
+}
+
+function lily(ctx, rng) {
+  const pink = rng() < 0.45, base = pink ? 19 : 4, spot = pink ? 20 : 5;
+  for (let j = 0; j < 6; j++) {
+    const phi = j * TAU / 6 + (rng() - 0.5) * 0.15, outer = j % 2 === 0;
+    petal(ctx, {
+      phi, L: 0.6 * (0.95 + rng() * 0.1), W: outer ? 0.12 : 0.15, t0: 0.38, t1: 2.25, tp: 2.3, cup: 0.35, r0: 0.02,
+      wave: outer ? 0 : 0.02,
+      shape: s => Math.pow(Math.sin(Math.PI * Math.min(1, 0.06 + s)), 0.8),
+      mat: (s, t) => {
+        if (Math.abs(t - 0.5) < 0.05 && s < 0.45) return 8;
+        if (s > 0.15 && s < 0.6 && Math.abs(t - 0.5) < 0.32 && hash(Math.floor(s * 18) * 31 + Math.floor(t * 8) * 7 + j * 101) > 0.7) return spot;
+        return base;
+      },
+    });
+  }
+  for (let j = 0; j < 6; j++) {
+    const a = j * TAU / 6 + 0.5, ca = Math.cos(a), sa = Math.sin(a);
+    const c = s => [ca * (0.02 + 0.17 * s), 0.04 + 0.44 * s - 0.08 * s * s, sa * (0.02 + 0.17 * s)];
+    tube(ctx, c, 0.008, 16);
+    const e = c(1); ellipsoid(ctx, e, 0.025, 0.012, 0.025, 9);
+  }
+  tube(ctx, s => [0.02 * s, 0.03 + 0.46 * s, 0], 0.011, 16);
+  ellipsoid(ctx, [0.02, 0.5, 0], 0.022, 0.018, 0.022, 10);
+  ellipsoid(ctx, [0, -0.02, 0], 0.05, 0.05, 0.05, 10);
+}
+
+function orchidBloom(ctx, rng, white) {
+  const m = white ? 21 : 6;
+  const sepal = s => Math.sqrt(Math.max(0, Math.sin(Math.PI * (0.05 + 0.92 * s))));
+  [0, 2.35, -2.35].forEach(phi => petal(ctx, { phi, L: 0.36, W: 0.1, t0: 1.32, t1: 1.62, cup: -0.12, r0: 0.02, shape: sepal, mat: m }));
+  [1.12, -1.12].forEach(phi => petal(ctx, {
+    phi, L: 0.33, W: 0.21, t0: 1.32, t1: 1.6, cup: -0.08, r0: 0.02, wave: 0.012,
+    shape: s => Math.pow(Math.max(0, Math.sin(Math.PI * (0.02 + 0.95 * s))), 0.45) * (0.4 + 0.75 * s),
+    mat: (s, t) => (s < 0.18 ? 7 : m),
+  }));
+  petal(ctx, {
+    phi: Math.PI, L: 0.22, W: 0.11, t0: 0.85, t1: 1.55, cup: 0.9, r0: 0.02, h0: 0.02,
+    shape: s => (s < 0.5 ? 0.55 + 0.6 * Math.sin(Math.PI * s * 1.6) : 0.35 + 0.45 * Math.sin(Math.PI * s)),
+    mat: (s, t) => (s < 0.25 ? 8 : 7),
+  });
+  ellipsoid(ctx, [0.05, 0.06, 0], 0.028, 0.05, 0.024, white ? 8 : 21);
+}
+
+/* ---------- the bouquet ---------- */
+function layout(opts) {
+  const rng = mulberry32(opts.seed);
+  const N = opts.count, capA = 1.0, sp = 0.74;
+  const R = Math.max(0.55, Math.sqrt(sp * sp * N / (TAU * (1 - Math.cos(capA)))));
+  const S = Math.max(1, R / 1.3);
+  const tie = [0, -(R * 0.6 + 0.6 * S), 0];
+  const kinds = opts.kinds.filter(k => k !== "breath");
+  if (!kinds.length) kinds.push("rose");
+  const types = [];
+  const off = Math.floor(rng() * kinds.length);
+  for (let i = 0; i < N; i++) types.push(kinds[(i + off) % kinds.length]);
+  for (let i = N - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [types[i], types[j]] = [types[j], types[i]]; }
+  const heads = [];
+  for (let i = 0; i < N; i++) {
+    const a = N === 1 ? 0 : capA * Math.sqrt((i + 0.5) / N), b = i * 2.39996 + rng() * 0.3;
+    const rj = R * (1 + (rng() - 0.5) * 0.08);
+    const pos = [rj * Math.sin(a) * Math.cos(b), rj * Math.cos(a), rj * Math.sin(a) * Math.sin(b)];
+    heads.push({ pos, d: nrm(sub(pos, tie)), type: types[i], scale: 1.2 + rng() * 0.25, spin: rng() * TAU, a });
+  }
+  const top = R + 0.65, bottom = tie[1] - 0.95 * S, side = R * Math.sin(capA) + 0.75;
+  return { rng, N, R, S, tie, heads, capA, estRadius: Math.max(side, (top - bottom) / 2) + 0.1, breath: opts.kinds.includes("breath") };
+}
+
+class Model {
+  constructor() { this.p = []; this.n = []; this.m = []; this.g = []; }
+  // g = a character code to print instead of shading (used by the gift card), 0 = none
+  push(x, y, z, nx, ny, nz, m, g = 0) { this.p.push(x, y, z); this.n.push(nx, ny, nz); this.m.push(m); this.g.push(g); }
+  finish() {
+    const P = this.p, n = P.length / 3;
+    let lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+    for (let i = 0; i < P.length; i += 3) for (let k = 0; k < 3; k++) { if (P[i + k] < lo[k]) lo[k] = P[i + k]; if (P[i + k] > hi[k]) hi[k] = P[i + k]; }
+    const c = [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2];
+    let R = 0, hr = 0;
+    this.P = new Float32Array(P.length);
+    for (let i = 0; i < P.length; i += 3) {
+      const x = P[i] - c[0], y = P[i + 1] - c[1], z = P[i + 2] - c[2];
+      this.P[i] = x; this.P[i + 1] = y; this.P[i + 2] = z;
+      const r = Math.hypot(x, y, z); if (r > R) R = r;
+      const q = Math.hypot(x, z); if (q > hr) hr = q;
+    }
+    this.hr = hr; this.hy = (hi[1] - lo[1]) / 2;
+    this.N = Float32Array.from(this.n); this.M = Uint8Array.from(this.m); this.G = Uint16Array.from(this.g);
+    this.count = n; this.R = R;
+    this.p = this.n = this.m = this.g = null;
+    return this;
+  }
+}
+
+// Split the card message into at most 3 lines of up to `max` characters.
+function wrapWords(text, max) {
+  const lines = []; let cur = "";
+  for (const w0 of String(text || "").trim().split(/\s+/).filter(Boolean)) {
+    const w = w0.slice(0, max);
+    if (!cur) cur = w;
+    else if ((cur + " " + w).length <= max) cur += " " + w;
+    else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  return lines.slice(0, 3);
+}
+
+// A square gift card leaning on the front of the paper wrap, tied to the bow with a string.
+// Called last, once everything else is built, so we can measure the bouquet exactly
+// the way the renderer will, and size the card so each letter covers one screen character.
+const PITCH0 = 0.32;   // the starting camera tilt (keep in sync with state.pitch)
+function addCard(model, world, o) {
+  const lines = wrapWords(o.text, 16);
+  if (!lines.length) return;
+  const { tie, S, rT, coneTopR, coneTopY, grid } = o;
+  const { rows, cols, aspect } = grid;
+
+  // 1. Measure the bouquet like Model.finish() and rasterize() do.
+  const P = model.p, lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+  for (let i = 0; i < P.length; i += 3) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], P[i + k]); hi[k] = Math.max(hi[k], P[i + k]); }
+  const c = mul(add(lo, hi), 0.5);
+  let R = 0, hr = 0;
+  for (let i = 0; i < P.length; i += 3) {
+    const x = P[i] - c[0], y = P[i + 1] - c[1], z = P[i + 2] - c[2];
+    R = Math.max(R, Math.hypot(x, y, z)); hr = Math.max(hr, Math.hypot(x, z));
+  }
+  const hy = (hi[1] - lo[1]) / 2, cp = Math.cos(PITCH0), sp = Math.sin(PITCH0), D = R * 4;
+  const scr = Math.min(rows / (2 * (hy * cp + hr * sp)), cols * aspect / (2 * hr)) * 0.84 * D;
+
+  // 2. Where: on the front of the cone (+z), a little above the bow.
+  const y0 = tie[1] - 0.04 * S;
+  const slope = (coneTopR - rT) / (coneTopY - y0);       // how fast the cone widens: dr/dy
+  const up = nrm([0, 1, slope]);                         // runs up along the paper
+  const normal = nrm([0, -slope, 1]);                    // points straight out of the paper
+  const right = [-1, 0, 0];                              // reads left-to-right when the card faces you
+  const longest = Math.max(...lines.map(l => l.length));
+  const nx = longest + 4;                                // border + one space each side
+  const ny = Math.max(lines.length + 4, Math.round(nx * aspect));   // rows that make it look square
+
+  // The size of one character cell depends on how far the card is from the camera (w),
+  // and w depends on where the card is. Two rounds of "guess, then correct" settle it.
+  let C, colW, rowH;
+  let w = D;
+  for (let round = 0; round < 3; round++) {
+    // Card facing the camera = bouquet turned by PI. Then a point (x, y, z) has
+    //   screen depth w = -z*cos(p) - y*sin(p) + D, and 1 world unit = scr / w rows.
+    // (x0.97: perspective makes the card a touch bigger than this estimate, so aim slightly small)
+    colW = 0.97 * aspect * w / scr;                      // world width of one column
+    const upOnScreen = up[1] * cp - up[2] * sp;          // the card leans back, so rows look shorter
+    rowH = 0.97 * w / (scr * upOnScreen);                // world height of one row
+    const H = ny * rowH;
+    const yc = tie[1] + 0.16 * S + H / 2;
+    const rc = rT + slope * (yc - y0);
+    C = add([0, yc, rc], mul(normal, 0.05 * S));
+    const cc = sub(C, c);                                // centred like the final model
+    w = -cc[2] * cp - cc[1] * sp + D;
+  }
+  const W = nx * colW, H = ny * rowH;
+  const at = (u, v, lift) => add(add(C, mul(normal, lift)), add(mul(right, (u - 0.5) * W), mul(up, (v - 0.5) * H)));
+
+  // 3. The paper: dense points marked as a blank character (code 32), so the card hides what is behind it.
+  const nu = Math.ceil(W / world.step) + 2, nv = Math.ceil(H / world.step) + 2;
+  for (let i = 0; i <= nu; i++) for (let j = 0; j <= nv; j++) {
+    const p = at(i / nu, j / nv, 0);
+    model.push(p[0], p[1], p[2], normal[0], normal[1], normal[2], 26, 32);
+  }
+
+  // 4. The characters: exactly one point at the centre of each slot, lifted a hair above
+  //    the paper so it always wins the z-buffer. Slots are one screen cell apart, so
+  //    floor(x0 + i) puts every letter in its own column.
+  const firstRow = Math.floor((ny - lines.length) / 2);
+  for (let iy = 0; iy < ny; iy++) for (let ix = 0; ix < nx; ix++) {
+    let ch = null, mat = 25;
+    const edgeX = ix === 0 || ix === nx - 1, edgeY = iy === 0 || iy === ny - 1;
+    if (edgeX && edgeY) ch = "+";
+    else if (edgeY) ch = "-";
+    else if (edgeX) ch = "|";
+    else if (ix === 1 && iy === ny - 2) ch = "o";        // the hole for the string
+    else {
+      const line = lines[iy - firstRow];
+      if (line) {
+        const l = line[ix - Math.floor((nx - line.length) / 2)];
+        if (l && l !== " ") { ch = l; mat = 24; }
+      }
+    }
+    if (!ch) continue;
+    const p = at((ix + 0.5) / nx, 1 - (iy + 0.5) / ny, 0.004 * S);
+    model.push(p[0], p[1], p[2], normal[0], normal[1], normal[2], mat, ch.charCodeAt(0));
+  }
+
+  // 5. A thin string from the bow knot, sagging a little, to the hole.
+  const hole = at(1.5 / nx, 1.5 / ny, 0);
+  const knot = [0, tie[1], rT + 0.08 * S];
+  const sag = [(knot[0] + hole[0]) / 2 - 0.05 * S, Math.min(knot[1], hole[1]) - 0.06 * S, (knot[2] + hole[2]) / 2 + 0.03 * S];
+  tube(world, bezier(knot, sag, hole), 0.006 * S, 8);
+}
+
+function buildBouquet(opts, grid) {
+  const fitCells = Math.min(grid.rows, grid.cols * grid.aspect);
+  const L = layout(opts), rng = L.rng, { R, S, tie } = L;
+  const step = (2 * L.estRadius / Math.max(20, fitCells)) * 0.5;
+  const model = new Model();
+  const world = { step, emit: (p, n, m) => model.push(p[0], p[1], p[2], n[0], n[1], n[2], m) };
+  const UP = [0, 1, 0];
+
+  // wrapping paper: inner tissue, outer kraft with soft pleats
+  const rimY = R * Math.cos(L.capA) * 0.55, rimR = R * Math.sin(L.capA) * 0.9 + 0.15, rT = 0.07 * S;
+  const cone = (rTop, yTop, phase, amp, mat) => patch(world, (u, v) => {
+    const a = u * TAU, sc = Math.sin(5 * a + phase);
+    const y = lerp(tie[1] - 0.04 * S, yTop + amp * sc, v);
+    const r = lerp(rT, rTop * (1 + 0.05 * Math.cos(5 * a + phase)), Math.pow(v, 1.15)) * (1 + 0.035 * Math.sin(22 * a) * v);
+    return [Math.cos(a) * r, y, Math.sin(a) * r];
+  }, mat);
+  cone(rimR * 0.97, rimY + 0.14 * S, 1.3, 0.12 * S, 15);
+  cone(rimR * 1.04, rimY - 0.06 * S, 0, 0.16 * S, 12);
+
+  // leaves fanned around the rim
+  const nl = 5 + Math.ceil(L.N / 3);
+  for (let j = 0; j < nl; j++) petal(world, {
+    phi: j * TAU / nl + rng() * 0.4, L: (0.55 + rng() * 0.25) * Math.sqrt(S), W: 0.12 * Math.sqrt(S),
+    t0: 0.5 + rng() * 0.2, t1: 1.45, tp: 1.8, cup: -0.3, r0: rimR * 0.82, h0: rimY - 0.05,
+    shape: s => Math.pow(Math.sin(Math.PI * Math.min(1, 0.03 + s)), 0.9),
+    mat: (s, t) => (Math.abs(t - 0.5) < 0.04 ? 10 : 11),
+  });
+
+  // flowers and their stems
+  const stemR = 0.022 * Math.sqrt(S);
+  L.heads.forEach((h, idx) => {
+    const base = sub(h.pos, mul(h.d, 0.12));
+    const ctrl = [base[0] * 0.35, lerp(tie[1], base[1], 0.5), base[2] * 0.35];
+    tube(world, bezier(tie, ctrl, base), stemR, 10);
+    if (h.type === "orchid") {
+      let out = [h.d[0], 0, h.d[2]];
+      out = len(out) < 1e-3 ? [Math.cos(h.spin), 0, Math.sin(h.spin)] : nrm(out);
+      const white = rng() < 0.4;
+      const b2 = add(add(h.pos, mul(out, 0.42)), [0, -0.14, 0]);
+      const bud1 = add(add(h.pos, mul(out, 0.72)), [0, -0.34, 0]);
+      const bud2 = add(add(h.pos, mul(out, 0.86)), [0, -0.5, 0]);
+      tube(world, bezier(base, add(h.pos, mul(out, 0.3)), bud2), stemR * 0.7, 10);
+      orchidBloom(frameCtx(model, step, h.pos, nrm(add(h.d, [0, 0.25, 0])), UP, 0, h.scale), rng, white);
+      orchidBloom(frameCtx(model, step, b2, nrm(add(h.d, mul(out, 0.3))), UP, 0, h.scale * 0.92), rng, white);
+      ellipsoid(world, bud1, 0.06, 0.05, 0.06, white ? 21 : 6);
+      ellipsoid(world, bud2, 0.04, 0.035, 0.04, 16);
+    } else {
+      const fn = h.type === "rose" ? rose : h.type === "lily" ? lily : magnolia;
+      fn(frameCtx(model, step, h.pos, h.d, UP, h.spin, h.scale), rng);
+    }
+    if (idx < 14) {
+      let dir = nrm(sub(tie, base)); dir = nrm([dir[0] * 0.3, dir[1], dir[2] * 0.3]);
+      const end = add(tie, mul(dir, 0.9 * S));
+      tube(world, s => add(tie, mul(sub(end, tie), s)), stemR, 10);
+    }
+  });
+
+  // baby's breath: airy clusters of tiny dots in the gaps
+  if (L.breath) {
+    const nc = Math.round(L.N * 2.2 + 3);
+    for (let k = 0; k < nc; k++) {
+      const a = Math.sqrt(rng()) * L.capA * 1.08, b = rng() * TAU, rr = R * (0.98 + rng() * 0.12) + 0.08;
+      const c = [rr * Math.sin(a) * Math.cos(b), rr * Math.cos(a), rr * Math.sin(a) * Math.sin(b)];
+      const n = nrm(sub(c, tie));
+      for (let q = 0; q < 9; q++) {
+        const p = add(c, [(rng() - 0.5) * 0.2, (rng() - 0.5) * 0.14, (rng() - 0.5) * 0.2]);
+        world.emit(p, n, 14);
+      }
+    }
+  }
+
+  // ribbon: band around the tie and a bow on the front
+  const rb = rT + 0.02 * S;
+  patch(world, (u, v) => { const a = u * TAU; return [Math.cos(a) * rb, tie[1] + (v - 0.5) * 0.09 * S, Math.sin(a) * rb]; }, 13);
+  const K = [0, tie[1], rb + 0.01];
+  [-1, 1].forEach(sg => {
+    const r = 0.13 * S;
+    patch(world, (u, v) => [sg * (r - r * Math.cos(TAU * u)), K[1] + 0.6 * r * Math.sin(TAU * u) * sg, K[2] + 0.03 + (v - 0.5) * 0.07 * S], 13);
+    patch(world, (u, v) => [sg * (0.02 + 0.12 * u) * S + (v - 0.5) * 0.06 * S, K[1] - 0.42 * u * S, K[2] + 0.04 + 0.03 * u], 13);
+  });
+  ellipsoid(world, add(K, [0, 0, 0.04]), 0.045 * S, 0.04 * S, 0.035 * S, 13);
+
+  // the gift card: sized so its letters land one per screen character
+  addCard(model, world, {
+    text: opts.card, tie, S, rT, grid,
+    coneTopR: rimR * 1.04, coneTopY: rimY - 0.06 * S + 0.16 * S,
+  });
+
+  return model.finish();
+}
+
+/* ---------- renderer ---------- */
+const RAMP = ".,-~:;=!*#$@";
+const LV = nrm([-0.45, 0.65, -0.6]);
+const HV = nrm([LV[0], LV[1], LV[2] - 1]);
+let zb, lb, mb, gb;
+
+function rasterize(model, view) {
+  const { cols, rows, aspect, angle, pitch } = view, n = cols * rows;
+  if (!zb || zb.length !== n) { zb = new Float32Array(n); lb = new Uint8Array(n); mb = new Uint8Array(n); gb = new Uint16Array(n); }
+  zb.fill(0); mb.fill(255); gb.fill(0);
+  const G = model.G, BIAS = model.R * 0.08;
+  const ca = Math.cos(angle), sa = Math.sin(angle), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const D = model.R * 4, ap = Math.abs(sp), ext = model.hy * cp + model.hr * ap;
+  const scr = Math.min(rows / (2 * ext), cols * aspect / (2 * model.hr)) * 0.84 * D;
+  const cx = cols / 2, cy = rows / 2, P = model.P, NN = model.N, M = model.M, cnt = model.count;
+  const LX = LV[0], LY = LV[1], LZ = LV[2], HX = HV[0], HY = HV[1], HZ = HV[2];
+  for (let i = 0, j = 0; i < cnt; i++, j += 3) {
+    const x = P[j], y = P[j + 1], z = P[j + 2];
+    const x1 = x * ca + z * sa, z1 = -x * sa + z * ca;
+    const y2 = y * cp + z1 * sp, w = z1 * cp - y * sp + D;
+    // letters on the card get a small head start in depth, so the slanted paper
+    // around them (which can be a little nearer within the same cell) never hides them
+    const ooz = 1 / (G[i] > 32 ? w - BIAS : w);
+    const sx = Math.floor(cx + x1 * scr * ooz / aspect), sy = Math.floor(cy - y2 * scr * ooz);
+    if (sx < 0 || sx >= cols || sy < 0 || sy >= rows) continue;
+    const k = sy * cols + sx;
+    if (ooz <= zb[k]) continue;
+    zb[k] = ooz;
+    const nx = NN[j], ny = NN[j + 1], nz = NN[j + 2];
+    let nx1 = nx * ca + nz * sa; const nz1 = -nx * sa + nz * ca;
+    let ny2 = ny * cp + nz1 * sp, nz2 = nz1 * cp - ny * sp;
+    const toward = nx1 * x1 + ny2 * y2 + nz2 * w;   // > 0: we are looking at the back of this surface
+    gb[k] = 0;
+    if (G[i]) {
+      // Card point. Its front faces us when the normal points back at the camera.
+      // facing = cosine of the angle between the card's normal and our line of sight.
+      const facing = -toward / Math.hypot(x1, y2, w);
+      if (facing > 0.3) { gb[k] = G[i]; mb[k] = M[i]; lb[k] = 11; continue; }
+    }
+    if (toward > 0) { nx1 = -nx1; ny2 = -ny2; nz2 = -nz2; }
+    let d = nx1 * LX + ny2 * LY + nz2 * LZ; if (d < 0) d = 0;
+    let s = nx1 * HX + ny2 * HY + nz2 * HZ; s = s > 0 ? Math.pow(s, 18) * 0.45 : 0;
+    let l = 0.15 + 0.64 * d + 0.28 * (nz2 < 0 ? -nz2 : 0) + s; if (l > 1) l = 1;
+    lb[k] = (l * 11.99) | 0; mb[k] = G[i] ? 26 : M[i];   // card seen edge-on or from behind: plain paper
+  }
+}
+
+const COLOR = MATS.map(([r, g, b]) => Array.from({ length: 6 }, (_, q) => {
+  const f = 0.55 + 0.55 * (q / 5);
+  const c = v => Math.min(255, Math.round(v * f)).toString(16).padStart(2, "0");
+  return "#" + c(r) + c(g) + c(b);
+}));
+
+function toText(cols, rows) {
+  let out = "";
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const k = y * cols + x;
+      out += gb[k] ? String.fromCharCode(gb[k]) : mb[k] === 255 ? " " : RAMP[lb[k]];
+    }
+    out += "\n";
+  }
+  return out;
+}
+
+const ESC = { "<": "&lt;", ">": "&gt;", "&": "&amp;" };
+
+function toHTML(cols, rows) {
+  const parts = [];
+  for (let y = 0; y < rows; y++) {
+    let cur = null, run = "";
+    for (let x = 0; x < cols; x++) {
+      const k = y * cols + x;
+      let col, ch;
+      if (gb[k] === 32) { ch = " "; col = cur; }
+      else if (gb[k]) { ch = String.fromCharCode(gb[k]); ch = ESC[ch] || ch; col = COLOR[mb[k]][5]; }
+      else if (mb[k] === 255) { ch = " "; col = cur; }
+      else { ch = RAMP[lb[k]]; col = COLOR[mb[k]][lb[k] >> 1]; }
+      if (col !== cur) { if (run) parts.push(cur ? '<span style="color:' + cur + '">' + run + "</span>" : run); run = ""; cur = col; }
+      run += ch;
+    }
+    if (run) parts.push(cur ? '<span style="color:' + cur + '">' + run + "</span>" : run);
+    parts.push("\n");
+  }
+  return parts.join("");
+}
+
+/* ---------- app ---------- */
+function initApp() {
+  const $ = id => document.getElementById(id);
+  const art = $("art"), stage = $("stage"), measure = $("measure");
+  const state = { count: 11, kinds: ["rose", "magnolia", "lily", "orchid", "breath"], seed: 7, speed: 0.5, detail: 12, colour: true, paused: false, angle: 0.6, pitch: PITCH0, card: "Моей любимой Вики!" };
+  try { Object.assign(state, JSON.parse(localStorage.getItem("ascii-bouquet-v3") || "{}")); } catch (e) {}
+  const save = () => { try { localStorage.setItem("ascii-bouquet-v3", JSON.stringify({ count: state.count, kinds: state.kinds, seed: state.seed, speed: state.speed, detail: state.detail, colour: state.colour, card: state.card })); } catch (e) {} };
+
+  let model = null, cols = 80, rows = 40, aspect = 0.6, buildKey = "";
+  function measureGrid() {
+    const fs = 20 - state.detail;
+    art.style.fontSize = fs + "px"; measure.style.fontSize = fs + "px";
+    measure.textContent = "M".repeat(100);
+    const cw = measure.getBoundingClientRect().width / 100 || fs * 0.6;
+    aspect = cw / fs;
+    cols = Math.max(20, Math.min(320, Math.floor(stage.clientWidth / cw)));
+    rows = Math.max(12, Math.min(160, Math.floor(stage.clientHeight / fs)));
+  }
+  function rebuild(force) {
+    measureGrid();
+    const fit = Math.min(rows, cols * aspect);
+    const key = [state.count, state.kinds.join(), state.seed, state.card, rows, cols, aspect.toFixed(3)].join("|");
+    if (!force && key === buildKey && model) return;
+    buildKey = key;
+    model = buildBouquet({ count: state.count, kinds: state.kinds, seed: state.seed, card: state.card }, { rows, cols, aspect });
+  }
+
+  const cardText = $("cardText");
+  cardText.value = state.card;
+  cardText.addEventListener("input", () => { state.card = cardText.value; soon(); });
+
+  const count = $("count"), countOut = $("countOut"), speed = $("speed"), detail = $("detail");
+  count.value = state.count; countOut.value = state.count; speed.value = state.speed; detail.value = state.detail;
+  const syncChips = () => document.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", String(state.kinds.includes(b.dataset.kind))));
+  syncChips();
+  $("colour").setAttribute("aria-pressed", String(state.colour));
+
+  let t;
+  const soon = () => { clearTimeout(t); t = setTimeout(() => { rebuild(); save(); }, 120); };
+  count.addEventListener("input", () => { state.count = +count.value; countOut.value = state.count; soon(); });
+  speed.addEventListener("input", () => { state.speed = +speed.value; save(); });
+  detail.addEventListener("input", () => { state.detail = +detail.value; soon(); });
+  $("kinds").addEventListener("click", e => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    const k = b.dataset.kind, on = state.kinds.includes(k);
+    const flowers = state.kinds.filter(x => x !== "breath");
+    if (on && k !== "breath" && flowers.length === 1) return; // keep at least one flower kind
+    state.kinds = on ? state.kinds.filter(x => x !== k) : state.kinds.concat(k);
+    syncChips(); soon();
+  });
+  $("pause").addEventListener("click", e => { state.paused = !state.paused; e.target.textContent = state.paused ? "Play" : "Pause"; });
+  $("shuffle").addEventListener("click", () => { state.seed = (Math.random() * 1e9) | 0; soon(); });
+  $("colour").addEventListener("click", e => { state.colour = !state.colour; e.target.setAttribute("aria-pressed", String(state.colour)); save(); });
+  $("toggleSlip").addEventListener("click", e => {
+    const s = $("slip"); s.hidden = !s.hidden;
+    e.target.textContent = s.hidden ? "Show controls" : "Hide controls";
+    e.target.setAttribute("aria-expanded", String(!s.hidden));
+    soon();
+  });
+
+  // drag to turn
+  let drag = null;
+  stage.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, a: state.angle, p: state.pitch }; stage.setPointerCapture(e.pointerId); stage.classList.add("dragging"); });
+  stage.addEventListener("pointermove", e => {
+    if (!drag) return;
+    state.angle = drag.a - (e.clientX - drag.x) * 0.012;
+    state.pitch = Math.max(-0.3, Math.min(1.3, drag.p + (e.clientY - drag.y) * 0.008));
+  });
+  const end = () => { drag = null; stage.classList.remove("dragging"); };
+  stage.addEventListener("pointerup", end); stage.addEventListener("pointercancel", end);
+
+  window.addEventListener("resize", soon);
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // clean view: open the page with #clean at the end of the address
+  const applyClean = () => { document.querySelector(".app").classList.toggle("clean", location.hash === "#clean"); soon(); };
+  window.addEventListener("hashchange", applyClean);
+  if (location.hash === "#clean") applyClean();
+
+  // GIF export: one full turn of the bouquet
+  let exporting = false, gifUrl = null;
+  const gifBtn = $("gif"), sheet = $("gifSheet");
+  gifBtn.addEventListener("click", async () => {
+    if (exporting) return;
+    exporting = true; gifBtn.disabled = true;
+    try {
+      const blob = await makeGif({
+        count: state.count, kinds: state.kinds, seed: state.seed, card: state.card,
+        pitch: state.pitch, startAngle: state.angle, colour: state.colour,
+        onProgress: (i, n) => { gifBtn.textContent = "Making GIF " + Math.round(100 * i / n) + "%"; },
+      });
+      if (gifUrl) URL.revokeObjectURL(gifUrl);
+      gifUrl = URL.createObjectURL(blob);
+      $("gifImg").src = gifUrl;
+      $("gifDownload").href = gifUrl;
+      $("gifMeta").textContent = "One full turn · " + (blob.size / 1048576).toFixed(1) + " MB";
+      sheet.hidden = false; $("gifClose").focus();
+    } catch (err) {
+      gifBtn.textContent = "GIF failed, try again";
+      console.error(err);
+      setTimeout(() => (gifBtn.textContent = "Save GIF"), 2500);
+      exporting = false; gifBtn.disabled = false;
+      return;
+    }
+    gifBtn.textContent = "Save GIF"; exporting = false; gifBtn.disabled = false;
+  });
+  const closeSheet = () => { sheet.hidden = true; gifBtn.focus(); };
+  $("gifClose").addEventListener("click", closeSheet);
+  sheet.addEventListener("click", e => { if (e.target === sheet) closeSheet(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !sheet.hidden) closeSheet(); });
+
+  let last = performance.now(), acc = 0;
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now; acc += dt;
+    if (!state.paused && !drag && !reduce) state.angle += dt * state.speed;
+    if (acc >= 1 / 40 && model && !exporting) {
+      acc = 0;
+      rasterize(model, { cols, rows, aspect, angle: state.angle, pitch: state.pitch });
+      if (state.colour) art.innerHTML = toHTML(cols, rows); else art.textContent = toText(cols, rows);
+    }
+    requestAnimationFrame(frame);
+  }
+  rebuild(true);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => rebuild(true));
+  requestAnimationFrame(frame);
+}
+
+/* ---------- GIF export ---------- */
+// A GIF stores up to 256 colours and LZW-compressed frames. Our picture only ever uses
+// a known set of colours (each material x 6 brightness levels), so the palette is exact.
+const GIF_BG = [13, 10, 17], GIF_INK = [239, 230, 220];
+const GIF_PALETTE = [GIF_BG, GIF_INK];
+MATS.forEach(([r, g, b]) => { for (let q = 0; q < 6; q++) { const f = 0.55 + 0.55 * (q / 5); GIF_PALETTE.push([r, g, b].map(v => Math.min(255, Math.round(v * f)))); } });
+while (GIF_PALETTE.length < 256) GIF_PALETTE.push([0, 0, 0]);
+
+class ByteWriter {
+  constructor() { this.buf = new Uint8Array(1 << 20); this.n = 0; }
+  byte(b) { if (this.n >= this.buf.length) { const nb = new Uint8Array(this.buf.length * 2); nb.set(this.buf); this.buf = nb; } this.buf[this.n++] = b; }
+  word(w) { this.byte(w & 255); this.byte((w >> 8) & 255); }
+  str(s) { for (const c of s) this.byte(c.charCodeAt(0)); }
+  result() { return this.buf.slice(0, this.n); }
+}
+
+// LZW compression as the GIF format defines it (8-bit pixels, codes grow from 9 to 12 bits).
+const LZW_TABLE = new Int16Array(4096 * 256);
+function lzwEncode(out, pixels) {
+  const minSize = 8, clear = 256, eoi = 257;
+  let size = 9, next = 258, cur = 0, bits = 0;
+  const used = [];
+  const chunk = [];
+  const flushByte = b => { chunk.push(b); if (chunk.length === 255) { out.byte(255); for (const c of chunk) out.byte(c); chunk.length = 0; } };
+  const emit = code => { cur |= code << bits; bits += size; while (bits >= 8) { flushByte(cur & 255); cur >>>= 8; bits -= 8; } };
+  const reset = () => { for (const k of used) LZW_TABLE[k] = 0; used.length = 0; size = 9; next = 258; };
+  out.byte(minSize);
+  emit(clear);
+  let prefix = pixels[0];
+  for (let i = 1; i < pixels.length; i++) {
+    const k = pixels[i], key = (prefix << 8) | k, found = LZW_TABLE[key];
+    if (found) { prefix = found; continue; }
+    emit(prefix);
+    if (next === 4096) { emit(clear); reset(); }
+    else { if (next >= (1 << size)) size++; LZW_TABLE[key] = next++; used.push(key); }
+    prefix = k;
+  }
+  emit(prefix); emit(eoi);
+  if (bits > 0) flushByte(cur & 255);
+  if (chunk.length) { out.byte(chunk.length); for (const c of chunk) out.byte(c); }
+  out.byte(0);
+  reset();
+}
+
+async function makeGif(o) {
+  // a fixed square picture, independent of the window
+  const fs = 12, rows = 56;
+  const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d");
+  const font = fs + 'px "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace';
+  ctx.font = font;
+  const cw = ctx.measureText("M".repeat(20)).width / 20, aspect = cw / fs;
+  const cols = Math.round(rows / aspect);
+  const W = Math.ceil(cols * cw), H = rows * fs;
+  canvas.width = W; canvas.height = H;
+  const model = buildBouquet({ count: o.count, kinds: o.kinds, seed: o.seed, card: o.card }, { rows, cols, aspect });
+
+  const FRAMES = 60, DELAY = 6;                 // 60 frames x 0.06 s = one turn every 3.6 s
+  const out = new ByteWriter();
+  out.str("GIF89a"); out.word(W); out.word(H);
+  out.byte(0xF7); out.byte(0); out.byte(0);    // 256-colour global palette, background = colour 0
+  for (const [r, g, b] of GIF_PALETTE) { out.byte(r); out.byte(g); out.byte(b); }
+  out.byte(0x21); out.byte(0xFF); out.byte(11); out.str("NETSCAPE2.0"); out.byte(3); out.byte(1); out.word(0); out.byte(0);   // loop forever
+
+  const colOf = new Int32Array(W);
+  for (let x = 0; x < W; x++) colOf[x] = Math.min(cols - 1, Math.floor(x / cw));
+  const cellIdx = new Uint8Array(cols * rows), pixels = new Uint8Array(W * H);
+  const bgSum = GIF_BG[0] + GIF_BG[1] + GIF_BG[2];
+
+  for (let f = 0; f < FRAMES; f++) {
+    const angle = o.startAngle + TAU * f / FRAMES;
+    rasterize(model, { cols, rows, aspect, angle, pitch: o.pitch });
+    ctx.fillStyle = "rgb(" + GIF_BG + ")"; ctx.fillRect(0, 0, W, H);
+    ctx.font = font; ctx.textBaseline = "top";
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      const k = y * cols + x;
+      let ch, idx;
+      if (gb[k] === 32 || (!gb[k] && mb[k] === 255)) { cellIdx[k] = 0; continue; }
+      if (gb[k]) { ch = String.fromCharCode(gb[k]); idx = 2 + mb[k] * 6 + 5; }
+      else { ch = RAMP[lb[k]]; idx = 2 + mb[k] * 6 + (lb[k] >> 1); }
+      if (!o.colour) idx = 1;
+      cellIdx[k] = idx;
+      const c = GIF_PALETTE[idx];
+      ctx.fillStyle = "rgb(" + c[0] + "," + c[1] + "," + c[2] + ")";
+      ctx.fillText(ch, x * cw, y * fs);
+    }
+    // Each pixel is either background or ink of its cell's colour: no colour guessing needed.
+    const data = ctx.getImageData(0, 0, W, H).data;
+    for (let py = 0, p = 0; py < H; py++) {
+      const rowBase = Math.min(rows - 1, Math.floor(py / fs)) * cols;
+      for (let px = 0; px < W; px++, p++) {
+        const d = data[p * 4] + data[p * 4 + 1] + data[p * 4 + 2] - bgSum;
+        pixels[p] = d > 60 ? cellIdx[rowBase + colOf[px]] : 0;
+      }
+    }
+    out.byte(0x21); out.byte(0xF9); out.byte(4); out.byte(0x04); out.word(DELAY); out.byte(0); out.byte(0);  // frame timing
+    out.byte(0x2C); out.word(0); out.word(0); out.word(W); out.word(H); out.byte(0);                       // frame position
+    lzwEncode(out, pixels);
+    o.onProgress && o.onProgress(f + 1, FRAMES);
+    await new Promise(r => setTimeout(r, 0));   // let the page breathe between frames
+  }
+  out.byte(0x3B);
+  return new Blob([out.result()], { type: "image/gif" });
+}
+
+if (typeof document !== "undefined") initApp();
+else if (typeof module !== "undefined") module.exports = { buildBouquet, rasterize, toText, lzwEncode, ByteWriter };
+</script>
+</body>
+</html>

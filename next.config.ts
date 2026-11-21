@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '10mb',
     },
   },
+  // /bouquet is a standalone page (public/bouquet/index.html): a spinning ASCII bouquet.
+  async rewrites() {
+    return [{ source: '/bouquet', destination: '/bouquet/index.html' }]
+  },
   images: {
     remotePatterns: [
       {
